@@ -18,12 +18,6 @@ export default function CompaniesInfo() {
             <div className="divider"></div>
 
             <div className="space-y-6">
-            <div>
-                <h2 className="text-2xl font-semibold text-secondary mb-2">Company Info</h2>
-                <p className="text-base-content/80">
-                Brief description about what the company does, its culture, or mission statement.
-                </p>
-            </div>
 
             <div>
                 <h2 className="text-2xl font-semibold text-secondary mb-2">Average Rating</h2>
@@ -58,17 +52,6 @@ export default function CompaniesInfo() {
                 </p>
             </div>
             </div>
-
-            <div className="mt-8 flex justify-center">
-                <button onClick={openModal} className="btn btn-primary btn-wide text-lg">
-                    Instant Elevator Pitch
-                </button>
-            </div>
-
-        <ElevatorPitchModal isOpen={isModalOpen} onClose={closeModal}>
-            <h1>Elevator Pitch</h1>
-            <p>Give me job pls.</p>
-        </ElevatorPitchModal>
 
         </div>
         </div>
