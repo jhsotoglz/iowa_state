@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
+const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,14 +27,14 @@ export async function POST(request: NextRequest) {
     // Create simple session token (just user ID for hackathon)
     const token = generateToken(user);
 
-    const response = NextResponse.json({ 
-      success: true, 
-      user: { 
-        id: user.id, 
-        email: user.email, 
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
         role: user.role,
-        name: user.name 
-      } 
+        name: user.name,
+      },
     });
 
     response.cookies.set("auth-token", token, {
@@ -52,14 +54,18 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function authenticateUser(email: string, password: string, role?: string) {
+async function authenticateUser(
+  email: string,
+  password: string,
+  role?: string
+) {
   try {
     // Find user by email and password (plain text for hackathon simplicity)
     const user = await prisma.user.findFirst({
-      where: { 
+      where: {
         email,
         password, // Direct password match - NOT for production!
-        ...(role && { role })
+        ...(role && { role }),
       },
     });
 
@@ -72,9 +78,11 @@ async function authenticateUser(email: string, password: string, role?: string) 
 
 function generateToken(user: any) {
   // Simple token for hackathon - just encode user ID
-  return Buffer.from(JSON.stringify({ 
-    userId: user.id, 
-    email: user.email,
-    role: user.role 
-  })).toString('base64');
+  return Buffer.from(
+    JSON.stringify({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    })
+  ).toString("base64");
 }
