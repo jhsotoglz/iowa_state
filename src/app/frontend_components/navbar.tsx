@@ -14,7 +14,7 @@ export default function Navbar() {
         </li>
         <li>
           <Link
-            href="/companies"
+            href="/companies_list"
             className="btn btn-outline btn-sm sm:btn-md md:btn-square md:w-24 md:h-24 text-xs sm:text-sm md:text-lg flex flex-col justify-center"
           >
             Companies
