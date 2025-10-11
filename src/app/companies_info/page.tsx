@@ -1,5 +1,5 @@
 "use client"
-import ElevatorPitchModal from "../frontend_components/elevator_pitch_modal";
+import CompanyBoothModal from '../frontend_components/company_booth_modal';
 import React, { useState } from 'react';
 
 export default function CompaniesInfo() {
@@ -51,7 +51,7 @@ export default function CompaniesInfo() {
                 Based on your profile and interests, this company could be a great match for your skillset.
                 </p>
             </div>
-            </div>
+        </div>
 
         </div>
         </div>
