@@ -1,16 +1,32 @@
 // app/create_review/page.tsx
 "use client";
-
 import { useState } from "react";
 
 const ACTION_URL = "/backend/reviews";
 
+// ISU College of Engineering majors (labels show the common ISU abbrev)
+const MAJORS = [
+  { value: "AER E", label: "Aerospace Engineering (AER E)" },
+  { value: "AG E", label: "Agricultural Engineering (AG E)" },
+  { value: "BSE", label: "Biological Systems Engineering (BSE)" },
+  { value: "CH E", label: "Chemical Engineering (CH E)" },
+  { value: "C E", label: "Civil Engineering (C E)" },
+  { value: "CON E", label: "Construction Engineering (CON E)" },
+  { value: "CPR E", label: "Computer Engineering (CPR E)" },
+  { value: "CYB E", label: "Cybersecurity Engineering (CYB E)" },
+  { value: "E E", label: "Electrical Engineering (E E)" },
+  { value: "ENVE", label: "Environmental Engineering (ENVE)" },
+  { value: "I E", label: "Industrial Engineering (I E)" },
+  { value: "M S E", label: "Materials Engineering (M S E)" },
+  { value: "M E", label: "Mechanical Engineering (M E)" },
+  { value: "SE", label: "Software Engineering (SE)" },
+];
+
 export default function CreateReviewPage() {
-  //states
   const [companyName, setCompanyName] = useState("");
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState<number | "">("");
-  const [major, setMajor] = useState("");
+  const [major, setMajor] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(
     null
@@ -43,15 +59,14 @@ export default function CreateReviewPage() {
           companyName: companyName.trim(),
           comment: comment.trim(),
           rating: Number(rating),
-          major: major.trim() || undefined,
+          // send only if chosen
+          ...(major ? { major } : {}),
         }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to create review");
 
       setMsg({ type: "ok", text: "Review created 🎉" });
-      // reset
       setCompanyName("");
       setComment("");
       setRating("");
@@ -86,6 +101,7 @@ export default function CreateReviewPage() {
               </label>
               <input
                 className="input input-bordered"
+                placeholder="e.g., TMC Transportation"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 required
@@ -141,12 +157,18 @@ export default function CreateReviewPage() {
                     Major (optional)
                   </span>
                 </label>
-                <input
-                  className="input input-bordered"
-                  placeholder="e.g., SE, EE, "
+                <select
+                  className="select select-bordered"
                   value={major}
                   onChange={(e) => setMajor(e.target.value)}
-                />
+                >
+                  <option value="">— Select Major —</option>
+                  {MAJORS.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
