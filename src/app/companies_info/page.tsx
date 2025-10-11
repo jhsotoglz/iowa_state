@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import CompanyBoothModal from "../frontend_components/company_booth_modal";
 
 export default function CompaniesInfo() {
     const [isModalOpen, setIsModalOpen] = useState(false);
