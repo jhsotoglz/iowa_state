@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   if (companyName) $match.companyName = { $regex: `^${companyName}$`, $options: "i" };
 
   const dbo = await getDb();
-  const cursor = dbo.collection("reviews").aggregate([
+  const cursor = dbo.collection("Reviews").aggregate([
     { $match },
     { $sort: { createdAt: -1 } },
     { $limit: limit },
@@ -48,9 +48,9 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ ok: true, reviews });
 }
 
-/* POST src/app/backend/reviews */
+/* ---------- POST /backend/reviews ---------- */
 /**
- * Expects JSON body:
+ * Creates a new review
  * {
  *   "email": "student@iastate.edu",
  *   "companyName": "New Way Trucks",
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
   const { email, companyName, comment, rating, major } = body as Record<string, unknown>;
 
-  // Validating data
+  // --- Validation ---
   if (typeof email !== "string" || !email.includes("@") || email.length > 120)
     return bad(400, "A valid email is required");
 
@@ -82,11 +82,10 @@ export async function POST(req: NextRequest) {
   if (major && (typeof major !== "string" || major.length > 16))
     return bad(400, "major must be ≤16 characters");
 
-// Adding review to mongo
-
+  // --- Insert into MongoDB ---
   const dbo = await getDb();
   const insert = await dbo.collection("reviews").insertOne({
-    email,               // stored but never shown in UI
+    email, // stored but never shown in UI
     companyName,
     comment,
     rating: r,
@@ -98,4 +97,85 @@ export async function POST(req: NextRequest) {
     { ok: true, id: insert.insertedId.toString() },
     { status: 201 }
   );
+}
+
+/* ---------- PATCH /backend/reviews ---------- */
+/**
+ * Allows users to edit their own review by matching _id + email
+ * Example body:
+ * {
+ *   "_id": "652dc17aabcd123...",
+ *   "email": "student@iastate.edu",
+ *   "comment": "Updated comment!",
+ *   "rating": 4
+ * }
+ */
+export async function PATCH(req: NextRequest) {
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") return bad(400, "Invalid JSON body");
+
+  const { _id, email, comment, rating, major } = body as Record<string, unknown>;
+
+  if (typeof email !== "string" || !email.includes("@")) return bad(400, "A valid email is required");
+  if (typeof _id !== "string" || !ObjectId.isValid(_id)) return bad(400, "Invalid review ID");
+
+  const update: Record<string, any> = {};
+  if (comment) {
+    if (typeof comment !== "string" || comment.trim().length === 0 || comment.length > 200)
+      return bad(400, "comment must be 1–200 chars");
+    update.comment = comment;
+  }
+
+  if (rating != null) {
+    const r = toInt(rating);
+    if (!Number.isInteger(r) || r < 1 || r > 5)
+      return bad(400, "rating must be integer 1–5");
+    update.rating = r;
+  }
+
+  if (major) {
+    if (typeof major !== "string" || major.length > 16)
+      return bad(400, "major must be ≤16 chars");
+    update.major = major;
+  }
+
+  if (Object.keys(update).length === 0)
+    return bad(400, "No valid fields provided for update");
+
+  const dbo = await getDb();
+  const result = await dbo.collection("reviews").updateOne(
+    { _id: new ObjectId(_id), email },
+    { $set: update }
+  );
+
+  if (result.matchedCount === 0)
+    return bad(404, "Review not found or email mismatch");
+
+  return NextResponse.json({ ok: true, modified: result.modifiedCount });
+}
+
+/* ---------- DELETE /backend/reviews ---------- */
+/**
+ * Allows users to delete their own review by matching _id + email
+ * Example body:
+ * {
+ *   "_id": "652dc17aabcd123...",
+ *   "email": "student@iastate.edu"
+ * }
+ */
+export async function DELETE(req: NextRequest) {
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") return bad(400, "Invalid JSON body");
+
+  const { _id, email } = body as Record<string, unknown>;
+  if (typeof email !== "string" || !email.includes("@")) return bad(400, "A valid email is required");
+  if (typeof _id !== "string" || !ObjectId.isValid(_id)) return bad(400, "Invalid review ID");
+
+  const dbo = await getDb();
+  const result = await dbo.collection("reviews").deleteOne({ _id: new ObjectId(_id), email });
+
+  if (result.deletedCount === 0)
+    return bad(404, "Review not found or email mismatch");
+
+  return NextResponse.json({ ok: true, deleted: true });
 }
