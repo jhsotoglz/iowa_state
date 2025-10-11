@@ -7,19 +7,18 @@ type Review = {
   _id: string;
   companyName: string;
   comment: string;
-  rating: number;
+  rating: number; // integer 1–5
   major?: string;
   createdAt: string;
 };
 
-/* ---------- Page ---------- */
 export default function ReviewsPage() {
   const [q, setQ] = useState("");
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const seen = useRef<Set<string>>(new Set()); // dedupe SSE arrivals
+  const seen = useRef<Set<string>>(new Set());
 
-  // Initial load
+  // Load initial reviews
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -35,7 +34,7 @@ export default function ReviewsPage() {
     })();
   }, []);
 
-  // Real-time stream (Server-Sent Events)
+  // Real-time stream
   useEffect(() => {
     const es = new EventSource("/backend/reviews/stream");
     es.onmessage = (evt) => {
@@ -43,7 +42,7 @@ export default function ReviewsPage() {
         const r: Review = JSON.parse(evt.data);
         if (seen.current.has(r._id)) return;
         seen.current.add(r._id);
-        setReviews((old) => [r, ...old]); // prepend newest
+        setReviews((old) => [r, ...old]);
       } catch {
         /* ignore malformed */
       }
@@ -51,7 +50,7 @@ export default function ReviewsPage() {
     return () => es.close();
   }, []);
 
-  // Local search/filter (by company or comment or major)
+  // Local search/filter
   const filtered = useMemo(() => {
     if (!q.trim()) return reviews;
     const needle = q.trim().toLowerCase();
@@ -66,13 +65,12 @@ export default function ReviewsPage() {
   return (
     <main className="min-h-screen bg-base-200">
       <div className="mx-auto max-w-3xl p-6 space-y-4">
-        {/* Header */}
         <header>
           <h1 className="text-4xl font-bold mb-1">Student Reviews</h1>
           <p className="opacity-70">Real-time feedback from the career fair</p>
         </header>
 
-        {/* Search box */}
+        {/* Search */}
         <div className="card bg-base-100 shadow">
           <div className="card-body gap-3">
             <input
@@ -107,7 +105,27 @@ export default function ReviewsPage() {
   );
 }
 
-/* ---------- ReviewCard ---------- */
+/* ---------- Stars (read-only, gray) ---------- */
+function StarRating({ value }: { value: number }) {
+  const v = Math.max(1, Math.min(5, Math.round(value))); // clamp to 1..5
+
+  return (
+    <div className="rating">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <div
+          key={n}
+          aria-label={`${n} star`}
+          className={`mask mask-star w-5 h-5 ${
+            n <= v ? "bg-gray-300" : "bg-gray-100"
+          }`}
+          aria-current={n === v ? "true" : undefined}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ---------- Review Card ---------- */
 function ReviewCard({ review }: { review: Review }) {
   const date = new Date(review.createdAt).toLocaleDateString(undefined, {
     year: "numeric",
@@ -118,23 +136,21 @@ function ReviewCard({ review }: { review: Review }) {
   return (
     <article className="card bg-base-100 shadow-sm">
       <div className="card-body p-4">
-        {/* Company name + rating */}
+        {/* Company + rating stars */}
         <div className="flex items-center gap-2">
           <h2 className="card-title text-lg">{review.companyName}</h2>
-          <div className="ml-auto badge badge-primary px-3 py-3">{review.rating}/5</div>
+          <div className="ml-auto">
+            <StarRating value={review.rating} />
+          </div>
         </div>
 
-        {/* Student major (the one discussed with recruiter) */}
         {review.major && (
           <p className="text-sm text-gray-500 mt-1">
             <strong>Major:</strong> {review.major}
           </p>
         )}
 
-        {/* Comment */}
         <p className="mt-2 text-base leading-relaxed">{review.comment}</p>
-
-        {/* Date */}
         <p className="text-xs opacity-60 mt-2">{date}</p>
       </div>
     </article>
