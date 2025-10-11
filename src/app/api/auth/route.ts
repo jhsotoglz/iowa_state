@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password, role } = await request.json();
 
-    // Validate credentials (replace with your actual database logic)
-    // This is just an example - you'd query your database here
+    // Validate input
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Email and password are required" },
+        { status: 400 }
+      );
+    }
+
     const user = await authenticateUser(email, password, role);
 
     if (!user) {
@@ -15,13 +22,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create session or JWT token
+    // Create simple session token (just user ID for hackathon)
     const token = generateToken(user);
 
-    // Set cookie or return token
     const response = NextResponse.json({ 
       success: true, 
-      user: { id: user.id, email: user.email, role: user.role } 
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role,
+        name: user.name 
+      } 
     });
 
     response.cookies.set("auth-token", token, {
@@ -33,6 +44,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
+    console.error("Authentication error:", error);
     return NextResponse.json(
       { error: "Authentication failed" },
       { status: 500 }
@@ -40,13 +52,29 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Helper functions (implement these based on your needs)
-async function authenticateUser(email: string, password: string, role: string) {
-  // Query your database to verify credentials
-  // Return user object if valid, null if invalid
+async function authenticateUser(email: string, password: string, role?: string) {
+  try {
+    // Find user by email and password (plain text for hackathon simplicity)
+    const user = await prisma.user.findFirst({
+      where: { 
+        email,
+        password, // Direct password match - NOT for production!
+        ...(role && { role })
+      },
+    });
+
+    return user;
+  } catch (error) {
+    console.error("Error authenticating user:", error);
+    return null;
+  }
 }
 
 function generateToken(user: any) {
-  // Generate JWT or session token
-  // Use a library like jsonwebtoken
+  // Simple token for hackathon - just encode user ID
+  return Buffer.from(JSON.stringify({ 
+    userId: user.id, 
+    email: user.email,
+    role: user.role 
+  })).toString('base64');
 }
