@@ -21,7 +21,7 @@ function toInt(n: unknown) {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const companyName = searchParams.get("companyName");
-  const limit = Math.min(Math.max(Number(searchParams.get("limit") ?? 50), 1), 200);
+  const limit = Math.min(Math.max(Number(searchParams.get("limit") ?? 100), 1), 200);
 
   const $match: any = {};
   if (companyName) $match.companyName = { $regex: `^${companyName}$`, $options: "i" };
