@@ -34,16 +34,21 @@ export default function CompaniesInfo() {
 
             <div>
                 <h2 className="text-2xl font-semibold text-secondary mb-2">Majors</h2>
-                <div className="flex flex-wrap gap-2">
-                <div className="badge badge-outline">Software Engineering</div>
-                <div className="badge badge-outline">Computer Science</div>
-                <div className="badge badge-outline">Electrical Engineering</div>
+                    <div className="flex flex-wrap gap-2">
+                    <div className="badge badge-outline">Software Engineering</div>
+                    <div className="badge badge-outline">Computer Science</div>
+                    <div className="badge badge-outline">Electrical Engineering</div>
                 </div>
             </div>
 
             <div>
-                <h2 className="text-2xl font-semibold text-secondary mb-2">Class Type</h2>
+                <h2 className="text-2xl font-semibold text-secondary mb-2">Job Type</h2>
                 <p className="text-base-content/80">Internship, Co-op, Full-Time</p>
+            </div>
+
+            <div>
+                <h2 className="text-2xl font-semibold text-secondary mb-2">Class Type</h2>
+                <p className="text-base-content/80">Freshman, Sophmore, Junior, Senior</p>
             </div>
 
             <div>
