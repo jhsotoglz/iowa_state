@@ -30,7 +30,7 @@ export default function LoginPage() {
               onClick={() => handleUserRoleSelection("Employer")}
               className="btn btn-secondary"
             >
-              Company
+              Employer
             </button>
           </div>
         </div>
