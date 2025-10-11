@@ -1,6 +1,6 @@
-"use client"
-import CompanyBoothModal from '../frontend_components/company_booth_modal';
-import React, { useState } from 'react';
+"use client";
+import React, { useState } from "react";
+import CompanyBoothModal from "../frontend_components/company_booth_modal";
 
 export default function CompaniesInfo() {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,39 +20,51 @@ export default function CompaniesInfo() {
             <div className="space-y-6">
 
             <div>
-                <h2 className="text-2xl font-semibold text-secondary mb-2">Average Rating</h2>
+                <h2 className="text-2xl font-semibold text-secondary mb-2">
+                Average Rating
+                </h2>
                 <div className="flex items-center gap-2">
                 <span className="font-medium text-base-content/70">(3/5)</span>
                 </div>
             </div>
 
             <div>
-                <h2 className="text-2xl font-semibold text-secondary mb-2">Majors</h2>
-                    <div className="flex flex-wrap gap-2">
-                    <div className="badge badge-outline">Software Engineering</div>
-                    <div className="badge badge-outline">Computer Science</div>
-                    <div className="badge badge-outline">Electrical Engineering</div>
+                <h2 className="text-2xl font-semibold text-secondary mb-2">
+                Majors
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                <div className="badge badge-outline">Software Engineering</div>
+                <div className="badge badge-outline">Computer Science</div>
+                <div className="badge badge-outline">Electrical Engineering</div>
                 </div>
             </div>
 
             <div>
-                <h2 className="text-2xl font-semibold text-secondary mb-2">Job Type</h2>
+                <h2 className="text-2xl font-semibold text-secondary mb-2">
+                Job Type
+                </h2>
                 <p className="text-base-content/80">Internship, Co-op, Full-Time</p>
             </div>
 
             <div>
-                <h2 className="text-2xl font-semibold text-secondary mb-2">Class Type</h2>
-                <p className="text-base-content/80">Freshman, Sophmore, Junior, Senior</p>
+                <h2 className="text-2xl font-semibold text-secondary mb-2">
+                Class Type
+                </h2>
+                <p className="text-base-content/80">
+                Freshman, Sophomore, Junior, Senior
+                </p>
             </div>
 
             <div>
-                <h2 className="text-2xl font-semibold text-secondary mb-2">Do You Fit?</h2>
+                <h2 className="text-2xl font-semibold text-secondary mb-2">
+                Do You Fit?
+                </h2>
                 <p className="text-base-content/80">
-                Based on your profile and interests, this company could be a great match for your skillset.
+                Based on your profile and interests, this company could be a great
+                match for your skillset.
                 </p>
             </div>
-        </div>
-
+            </div>
         </div>
         </div>
     );
