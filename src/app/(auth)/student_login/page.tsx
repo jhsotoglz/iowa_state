@@ -217,7 +217,7 @@ export default function StudentLogin() {
           </button>
 
           <button
-            onClick={() => router.push("/login_page")}
+            onClick={() => router.push("/login_signup")}
             className="btn btn-ghost btn-sm"
             disabled={loading}
           >
