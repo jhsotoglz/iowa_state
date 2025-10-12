@@ -26,7 +26,7 @@ interface FloorMapProps {
   width: number;
   height: number;
   companies: Company[];
-  userType: string;
+  admin: boolean;
 }
 
 export interface Company {
@@ -82,7 +82,7 @@ function HeatmapLayer({ points }: { points: [number, number, number][] }) {
 const FloorMap = forwardRef<
   { getMarkers: () => MarkerPosition[] },
   FloorMapProps
->(({ imageUrl, width, height, companies = [], userType }, ref) => {
+>(({ imageUrl, width, height, companies = [], admin }, ref) => {
   if (!width || !height) {
     return <p>Loading floor map...</p>;
   }
@@ -153,7 +153,7 @@ const FloorMap = forwardRef<
             key={i}
             position={m.boothNumber}
             icon={markerIcon}
-            draggable={userType === "admin"}
+            draggable={admin === true}
             autoPan
             eventHandlers={{
               dragend: (e) => {

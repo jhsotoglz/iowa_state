@@ -4,11 +4,15 @@ import dynamic from "next/dynamic";
 import { useRef, useState, useEffect } from "react";
 import type { MarkerPosition } from "../frontend_components/floor_map";
 
+
 const FloorMap = dynamic(() => import("../frontend_components/floor_map"), {
   ssr: false,
 });
 
+
 export default function home() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const floorMapRef = useRef<{ getMarkers: () => MarkerPosition[] }>(null);
   const [companies, setCompanies] = useState<any[]>([]);
 
@@ -27,6 +31,64 @@ export default function home() {
         setCompanies(companyList);
       })
       .catch((err) => console.error("Error fetching company info:", err));
+  }, []);
+
+    const handleSave = async () => {
+    const positions = floorMapRef.current?.getMarkers() || [];
+
+    try {
+      // Send PATCH requests for all markers in parallel
+      const updates = positions.map((marker) => {
+        console.log("Updating marker:", marker.companyId);
+        return fetch("/api/companyInfo", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: marker.companyId,
+            updateData: {
+              boothNumber: {
+                lat: marker.lat,
+                lng: marker.lng,
+              },
+            },
+          }),
+        });
+      });
+
+      await Promise.all(updates);
+
+      alert("Booth numbers successfully updated!");
+    } catch (error) {
+      console.error("Error updating booth numbers:", error);
+      alert("Failed to update booth numbers.");
+    }
+  };
+
+// Fetch the profile data
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const res = await fetch("/api/user");
+        if (!res.ok) {
+          return;
+        }
+        const data = await res.json();
+        setUser(data.user);
+        console.log("Fetch User", data.user)
+
+      }
+      catch (error) {
+        // Redirect to the login if there is an error.
+        console.error(error);
+      }
+      finally {
+        setLoading(false)
+      }
+    };
+
+    checkUser();
   }, []);
 
 
@@ -49,13 +111,22 @@ export default function home() {
           industry: c.industry,
           website: c.website,
           _id: c._id,
-          count: c.count,
-          review: c.review
+          count: c.count
         }))}
-        userType=""
+        admin={user?.admin === true}
       />
     </div>
   </div>
+
+{user?.admin && (
+  <button
+    className="btn btn-primary absolute bottom-12 right-51 shadow-lg"
+    onClick={handleSave}
+  >
+    Save Map
+  </button>
+)}
+
 </main>
 
   );
