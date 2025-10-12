@@ -1,6 +1,7 @@
 interface User {
   workAuthorization: string[];
   workPreferences: string[];
+  major: string;
 }
 
 interface Company {
@@ -8,39 +9,46 @@ interface Company {
   name: string;
   employmentType: string[];
   sponsorVisa: boolean;
+  major: string[];
 }
 
 export function calculateMatches(user: User, companies: Company[]): Company[] {
   if (!user?.workPreferences || !companies?.length) {
-    //either user work preference or companies have to exist
     return [];
   }
 
   return companies.filter((company) => {
-    const userPrefs = user.workPreferences;
-    const userWorkAuth = user.workAuthorization;
-    const employmentType = company.employmentType;
+    // RULE 1: Major must match (absolute requirement)
+    const hasMajorMatch = company.major.some(
+      (companyMajor) =>
+        companyMajor.toUpperCase().replace(/\s+/g, "") ===
+        user.major.toUpperCase().replace(/\s+/g, "")
+    );
 
-    // Check if user needs visa sponsorship
-    const needsVisa =
-      userWorkAuth.includes("H1B Visa") ||
-      userWorkAuth.includes("F1 Visa") ||
-      !userWorkAuth.includes("US Citizen") ||
-      !userWorkAuth.includes("Green Card");
-
-    // Check if user is authorized to work without sponsorship
-    const hasWorkAuth =
-      userWorkAuth.includes("US Citizen") ||
-      userWorkAuth.includes("Green Card");
-
-    // Strict check: if user needs visa but company doesn't sponsor
-    if (needsVisa && !hasWorkAuth && !company.sponsorVisa) {
+    if (!hasMajorMatch) {
       return false;
     }
 
-    // Strict check: work type must match
-    const hasMatchingWorkType = userPrefs.some((userPref) =>
-      employmentType.includes(userPref)
+    // RULE 2: Visa sponsorship must match user's needs (absolute requirement)
+    const hasWorkAuth =
+      user.workAuthorization.includes("US Citizen") ||
+      user.workAuthorization.includes("Green Card");
+
+    if (!hasWorkAuth && !company.sponsorVisa) {
+      return false;
+    }
+
+    // RULE 3: Employment type must match (absolute requirement)
+    // FIX: Normalize to uppercase for case-insensitive comparison
+    const normalizedUserPrefs = user.workPreferences.map((p) =>
+      p.toUpperCase().replace(/[-\s]/g, "")
+    );
+    const normalizedCompanyTypes = company.employmentType.map((t) =>
+      t.toUpperCase().replace(/[-\s]/g, "")
+    );
+
+    const hasMatchingWorkType = normalizedUserPrefs.some((userPref) =>
+      normalizedCompanyTypes.includes(userPref)
     );
 
     if (!hasMatchingWorkType) {
