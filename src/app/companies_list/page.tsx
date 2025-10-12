@@ -3,10 +3,12 @@ import Link from "next/link";
 import React from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import CompanyListSearch from "../frontend_components/company_list_search";
 
 export default function CompaniesList() {
   const [companyData, setCompanyData] = useState<any[]>([]);
   const [ratingData, setRatingData] = useState<any[]>([]);
+  const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -89,6 +91,8 @@ export default function CompaniesList() {
       <li className="p-4 pb-2 text-xs opacity-60 tracking-wide">
         List of companies
       </li>
+
+      <CompanyListSearch/>
 
       {sortedCompanies.map((company, index) => (
         <li key={index} className="list-row" onClick={() => handleCompanyClick(company._id)}>
