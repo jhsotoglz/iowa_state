@@ -11,6 +11,8 @@ import {
 import L, { LatLng } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.heat";
+import { useRouter } from "next/navigation";
+
 
 export interface MarkerPosition {
   name: string;
@@ -123,8 +125,10 @@ const FloorMap = forwardRef<
       return updated;
     });
   };
+  const router = useRouter();
 
   return (
+    
     <div style={{ height: "100%", width: "100%" }}>
       <MapContainer
         crs={L.CRS.Simple}
@@ -169,33 +173,33 @@ const FloorMap = forwardRef<
                   <span>Employment Type: {m.employmentType.join(", ")}</span>
                 )}
                 <br />
-
                 {m.count && <span>Line Count: {m.count}</span>}
                 <br />
-                <button
-                  className="btn btn-sm btn-primary mt-2"
-                  onClick={() => {
-                    if (m.website) {
-                      window.open(m.website, "_blank");
-                    }
-                  }}
-                >
-                  Visit Website
-                </button>
-                <button
-                  className="btn btn-sm btn-primary mt-2 ml-3"
-                  onClick={() => {
-                    //Route to Review with comp id
-                  }}
-                >
-                  Review
-                </button>
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="checkbox checkbox-neutral mt-2 ml-2"
-                />
-                <span className="mt-2 ml-2">In Line?</span>
+                <div className="flex items-center space-x-3 mt-2">
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => {
+                      if (m.website) window.open(m.website, "_blank");
+                    }}
+                  >
+                    Visit Website
+                  </button>
+
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => router.push(`/create_review`)}
+                  >
+                    Review
+                  </button>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-neutral"
+                    />
+                    <span className="ml-2">In Line?</span>
+                  </div>
+                </div>
               </div>
             </Popup>
           </Marker>
