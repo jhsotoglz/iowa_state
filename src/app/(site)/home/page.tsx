@@ -130,8 +130,10 @@ export default function Home() {
 
       {user?.admin && (
         <button
-          className="btn btn-primary absolute bottom-12 right-51 shadow-lg"
+          className="btn absolute bottom-12 right-51 shadow-lg"
           onClick={handleSave}
+          style={{ background: "#13AA52"}}
+
         >
           Save Map
         </button>
