@@ -77,6 +77,22 @@ export default function UserInfo() {
     setSaving(true);
     setError("");
 
+    if (workPreference.length === 0) {
+      setError("Please select at least one work preference");
+      setSaving(false);
+      return;
+    }
+    if (workAuthorization.length === 0) {
+      setError("Please select at least one work authorization");
+      setSaving(false);
+      return;
+    }
+    if (!graduationYear) {
+      setError("Please select your graduation year");
+      setSaving(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/user", {
         method: "PATCH",
@@ -95,6 +111,7 @@ export default function UserInfo() {
       }
 
       alert("Profile updated successfully!");
+      router.push("/view_reviews");
     } catch (err) {
       setError("Failed to update profile");
       console.error(err);
