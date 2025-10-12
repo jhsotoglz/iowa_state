@@ -34,19 +34,20 @@ export default function Profile() {
   }, []);
 
   // Logs out the user
-  const handleLogout = async () => {
-    try {
-      const res = await fetch("/api/auth/logout", { method: "POST" });
-      if (res.ok) {
-        router.push("/login_page");
-      } else {
-        console.error("Logout failed");
-      }
-    } 
-    catch (err) {
-      console.error("Error during logout:", err);
+const handleLogout = async () => {
+  try {
+    const res = await fetch("/api/auth/logout", { method: "POST" });
+    if (res.ok) {
+      // Redirect to the role selection page after logout
+      router.replace("/login_signup");
+    } else {
+      console.error("Logout failed");
     }
-  };
+  } catch (err) {
+    console.error("Error during logout:", err);
+  }
+};
+
   
   if (loading) {
     return (
