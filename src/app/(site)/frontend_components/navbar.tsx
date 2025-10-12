@@ -24,9 +24,9 @@ export default function Navbar({ className = "" }: NavbarProps) {
     >
       <div
         className="flex justify-between items-center 
-                   bg-base-100/95 border border-base-300/80 
-                   backdrop-blur-md shadow-xl rounded-xl 
-                   px-3 sm:px-4 py-2 sm:py-3"
+                   bg-base-100/70 backdrop-blur-md border border-base-300/60 
+                   shadow-xl rounded-xl 
+                   px-3 sm:px-4 py-2 sm:py-3 transition-all duration-300"
       >
         {items.map(({ href, label }) => {
           const active = pathname === href;
@@ -39,9 +39,9 @@ export default function Navbar({ className = "" }: NavbarProps) {
                 "flex-1 text-center font-medium select-none",
                 "text-sm sm:text-base tracking-wide rounded-lg py-2",
                 "transition-all duration-200 ease-in-out",
-                "hover:bg-base-200 hover:text-primary hover:shadow-sm",
+                "hover:bg-base-200/70 hover:text-white hover:shadow-sm",
                 active
-                  ? "bg-base-200 text-primary font-semibold"
+                  ? "bg-base-200/70 text-white font-semibold"
                   : "text-base-content/70",
               ].join(" ")}
             >
