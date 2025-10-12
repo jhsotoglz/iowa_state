@@ -1,7 +1,10 @@
+// src/app/view_reviews/page.tsx
 "use client";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+// Interactive stars you already use on create_review:
+import StarInput from "../frontend_components/star_rating";
 
 /* ---------- Types ---------- */
 type Review = {
@@ -11,6 +14,7 @@ type Review = {
   rating: number; // 1–5
   major?: string;
   createdAt: string;
+  mine?: boolean; // server-provided ownership flag
 };
 
 type CompanySummary = { companyName: string; avgRating: number; count: number };
@@ -23,14 +27,17 @@ export default function ReviewsPage() {
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
   const seen = useRef<Set<string>>(new Set());
 
+  // local edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftComment, setDraftComment] = useState("");
+  const [draftRating, setDraftRating] = useState<number>(3);
+
   /* ---- data fetchers ---- */
   async function fetchReviews(query: string) {
     const params = new URLSearchParams();
     params.set("limit", "50");
     if (query.trim()) params.set("q", query.trim());
-    const res = await fetch(`/backend/reviews?${params.toString()}`, {
-      cache: "no-store",
-    });
+    const res = await fetch(`/backend/reviews?${params.toString()}`, { cache: "no-store" });
     const data = await res.json();
     const list: Review[] = data?.reviews ?? [];
     setReviews(list);
@@ -40,14 +47,11 @@ export default function ReviewsPage() {
   async function fetchTopCompanies() {
     const res = await fetch("/backend/reviews/summary", { cache: "no-store" });
     const data = await res.json();
-
-    // Normalize and coerce avgRating to number
     const list: CompanySummary[] = (data?.companies ?? []).map((c: any) => ({
       companyName: String(c.companyName ?? ""),
       avgRating: Number(c.avgRating),
       count: Number(c.count ?? 0),
     }));
-
     setCompanies(list);
   }
 
@@ -91,12 +95,50 @@ export default function ReviewsPage() {
           setReviews((old) => [r, ...old]);
         }
 
-        // keep Top Companies live
         fetchTopCompanies();
       } catch {}
     };
     return () => es.close();
   }, [q]);
+
+  /* ---- actions ---- */
+  function startEdit(review: Review) {
+    setEditingId(review._id);
+    setDraftComment(review.comment);
+    setDraftRating(review.rating);
+  }
+  function cancelEdit() {
+    setEditingId(null);
+    setDraftComment("");
+    setDraftRating(3);
+  }
+  async function saveEdit(id: string) {
+    const comment = draftComment.trim();
+    if (!comment) return;
+    const res = await fetch("/backend/reviews", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ _id: id, comment, rating: draftRating }),
+    });
+    if (res.ok) {
+      setReviews((old) =>
+        old.map((r) => (r._id === id ? { ...r, comment, rating: draftRating } : r))
+      );
+      cancelEdit();
+      fetchTopCompanies();
+    }
+  }
+  async function removeReview(id: string) {
+    const res = await fetch("/backend/reviews", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ _id: id }),
+    });
+    if (res.ok) {
+      setReviews((old) => old.filter((r) => r._id !== id));
+      fetchTopCompanies();
+    }
+  }
 
   return (
     <main className="min-h-screen bg-base-200">
@@ -106,7 +148,6 @@ export default function ReviewsPage() {
           <div>
             <h1 className="text-5xl font-bold mb-1">Student Reviews</h1>
           </div>
-
           <Link
             href="/create_review"
             className="btn btn-primary btn-md sm:btn-lg mt-6 px-6 text-base font-semibold shadow-md"
@@ -153,7 +194,18 @@ export default function ReviewsPage() {
           <ul className="space-y-3">
             {reviews.map((r) => (
               <li key={r._id}>
-                <ReviewCard review={r} />
+                <ReviewCard
+                  review={r}
+                  isEditing={editingId === r._id}
+                  draftComment={draftComment}
+                  draftRating={draftRating}
+                  onStartEdit={() => startEdit(r)}
+                  onCancelEdit={cancelEdit}
+                  onChangeDraftComment={setDraftComment}
+                  onChangeDraftRating={setDraftRating}
+                  onSaveEdit={() => saveEdit(r._id)}
+                  onDelete={() => removeReview(r._id)}
+                />
               </li>
             ))}
           </ul>
@@ -206,8 +258,8 @@ function InsightsCard({
   );
 }
 
-/* ---------- Stars for individual reviews ---------- */
-function StarRating({ value }: { value: number }) {
+/* ---------- Stars (read-only) for individual reviews ---------- */
+function StarDisplay({ value }: { value: number }) {
   const v = Math.max(1, Math.min(5, Math.round(value)));
   return (
     <div className="rating">
@@ -215,9 +267,7 @@ function StarRating({ value }: { value: number }) {
         <div
           key={n}
           aria-label={`${n} star`}
-          className={`mask mask-star w-5 h-5 ${
-            n <= v ? "bg-gray-300" : "bg-gray-100"
-          }`}
+          className={`mask mask-star w-5 h-5 ${n <= v ? "bg-gray-300" : "bg-gray-100"}`}
           aria-current={n === v ? "true" : undefined}
         />
       ))}
@@ -225,15 +275,44 @@ function StarRating({ value }: { value: number }) {
   );
 }
 
-/* ---------- Review card ---------- */
-function ReviewCard({ review }: { review: Review }) {
+/* ---------- Review card with edit/delete ---------- */
+function ReviewCard({
+  review,
+  isEditing,
+  draftComment,
+  draftRating,
+  onStartEdit,
+  onCancelEdit,
+  onChangeDraftComment,
+  onChangeDraftRating,
+  onSaveEdit,
+  onDelete,
+}: {
+  review: Review;
+  isEditing: boolean;
+  draftComment: string;
+  draftRating: number;
+  onStartEdit: () => void;
+  onCancelEdit: () => void;
+  onChangeDraftComment: (v: string) => void;
+  onChangeDraftRating: (v: number) => void;
+  onSaveEdit: () => void;
+  onDelete: () => void;
+}) {
   return (
     <article className="card bg-base-100 shadow-sm">
       <div className="card-body p-4">
         <div className="flex items-center gap-2">
           <h2 className="card-title text-lg">{review.companyName}</h2>
           <div className="ml-auto">
-            <StarRating value={review.rating} />
+            {isEditing ? (
+              <div className="flex items-center gap-2">
+                <StarInput value={draftRating} onChange={onChangeDraftRating} />
+                <span className="text-xs opacity-60">({draftRating}/5)</span>
+              </div>
+            ) : (
+              <StarDisplay value={review.rating} />
+            )}
           </div>
         </div>
 
@@ -243,7 +322,31 @@ function ReviewCard({ review }: { review: Review }) {
           </p>
         )}
 
-        <p className="mt-2 text-base leading-relaxed">{review.comment}</p>
+        {/* comment / edit mode */}
+        {isEditing ? (
+          <div className="mt-2 space-y-2">
+            <textarea
+              className="textarea textarea-bordered w-full h-24"
+              value={draftComment}
+              onChange={(e) => onChangeDraftComment(e.target.value)}
+              maxLength={200}
+            />
+            <div className="flex gap-2 justify-end">
+              <button className="btn btn-ghost" onClick={onCancelEdit}>Cancel</button>
+              <button className="btn btn-primary" onClick={onSaveEdit}>Save</button>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-2 text-base leading-relaxed">{review.comment}</p>
+        )}
+
+        {/* actions only if it's mine and not already in edit mode */}
+        {review.mine && !isEditing && (
+          <div className="mt-3 flex gap-2 justify-end">
+            <button className="btn btn-outline btn-sm" onClick={onStartEdit}>Edit</button>
+            <button className="btn btn-error btn-sm" onClick={onDelete}>Delete</button>
+          </div>
+        )}
       </div>
     </article>
   );

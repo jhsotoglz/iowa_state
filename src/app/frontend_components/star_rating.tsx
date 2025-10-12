@@ -7,7 +7,6 @@ export default function StarRating({
   onChange: (n: number) => void;
   name?: string;
 }) {
-  // Render 1..5 stars with radio inputs (accessible + keyboardable)
   return (
     <div className="rating rating-lg">
       {[1, 2, 3, 4, 5].map((n) => (
@@ -15,10 +14,12 @@ export default function StarRating({
           key={n}
           type="radio"
           name={name}
-          className="mask mask-star-2 bg-warning"
           aria-label={`${n} star${n > 1 ? "s" : ""}`}
           checked={value === n}
           onChange={() => onChange(n)}
+          className={`mask mask-star-2 cursor-pointer ${
+            n <= (value || 0) ? "bg-gray-300" : "bg-gray-100"
+          }`}
         />
       ))}
     </div>
