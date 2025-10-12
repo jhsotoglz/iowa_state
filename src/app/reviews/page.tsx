@@ -60,7 +60,7 @@ export default function ReviewsPage() {
     })();
   }, []);
 
-  /* ---- refetch on search (debounced) ---- */
+  /* ---- refetch on search ---- */
   useEffect(() => {
     const id = setTimeout(() => {
       setLoading(true);
@@ -69,7 +69,7 @@ export default function ReviewsPage() {
     return () => clearTimeout(id);
   }, [q]);
 
-  /* ---- realtime stream: prepend when it matches current q; refresh Top Companies ---- */
+  /* ---- realtime stream ---- */
   useEffect(() => {
     const es = new EventSource("/backend/reviews/stream");
     es.onmessage = async (evt) => {
