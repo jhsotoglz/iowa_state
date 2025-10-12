@@ -1,56 +1,56 @@
-import { NextResponse, NextRequest } from "next/server";
+// app/api/user/route.ts
+export const runtime = "nodejs";
+
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/database/mongodb";
 import { ObjectId } from "mongodb";
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+import { cookies } from "next/headers";
 
-// Test 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const testUserId = searchParams.get("userId") || "68eaead4773832b478adba02";
-
     const db = await getDb();
-    const user = await db.collection("UserProfile").findOne(
-      { _id: new ObjectId(testUserId) },
-      { projection: { password: 0 } }
-    );
+    const { searchParams } = new URL(req.url);
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found." }, { status: 404 });
+    // 1) Prefer logged-in user via cookie (set by your login route)
+    const emailFromCookie = (await cookies()).get("email")?.value;
+
+    let query: any = null;
+
+    if (emailFromCookie) {
+      query = { email: emailFromCookie.trim().toLowerCase() };
+    } else {
+      // 2) Fallback: allow ?userId=... for testing
+      const userId = searchParams.get("userId");
+      if (!userId) {
+        return NextResponse.json(
+          { error: "Missing userId (and no login cookie)" },
+          { status: 400 }
+        );
+      }
+      if (!ObjectId.isValid(userId)) {
+        return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
+      }
+      query = { _id: new ObjectId(userId) };
     }
 
-    return NextResponse.json({ user }, { status: 200 });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+    const doc = await db.collection("UserProfile").findOne(
+      query,
+      { projection: { password: 0, hashedPassword: 0 } } // never return passwords
+    );
+
+    if (!doc)
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+    const { _id, ...rest } = doc;
+    return NextResponse.json(
+      { user: { id: String(_id), ...rest } },
+      { status: 200 }
+    );
+  } catch (err) {
+    console.error("GET /api/user error:", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
-
-// Fetch a specific logged in user. This one is for the actual one, like getting the said logged in user.
-/*export async function GET() {
-  try {
-    const cookieStore = cookies();
-    const userId = (await cookieStore).get("userId")?.value;
-
-    if (!userId) {
-      return NextResponse.json({ error: "Not logged in." }, { status: 401 });
-    }
-
-    const db = await getDb();
-    const user = await db.collection("UserProfile").findOne(
-      { _id: new ObjectId(userId) },
-      { projection: { password: 0 } } 
-    );
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found." }, { status: 404 });
-    }
-
-    return NextResponse.json({ user }, { status: 200 });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
-  }
-}*/
-
