@@ -155,7 +155,6 @@ export default function ReviewsPage() {
 }
 
 /* ---------- Insights table card (Top Companies) ---------- */
-/* ---------- Insights table card (Top Companies) ---------- */
 function InsightsCard({
   title,
   rows,
@@ -217,12 +216,6 @@ function StarRating({ value }: { value: number }) {
 
 /* ---------- Review card ---------- */
 function ReviewCard({ review }: { review: Review }) {
-  const date = new Date(review.createdAt).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-
   return (
     <article className="card bg-base-100 shadow-sm">
       <div className="card-body p-4">
@@ -240,7 +233,6 @@ function ReviewCard({ review }: { review: Review }) {
         )}
 
         <p className="mt-2 text-base leading-relaxed">{review.comment}</p>
-        <p className="text-xs opacity-60 mt-2">{date}</p>
       </div>
     </article>
   );
