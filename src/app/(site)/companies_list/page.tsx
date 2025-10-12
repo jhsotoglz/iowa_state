@@ -12,6 +12,29 @@ export default function CompaniesList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+
+  // Fetch the profile data
+  useEffect(() => {
+      const checkUser = async () => {
+        try {
+          const res = await fetch("/api/user");
+          if (!res.ok) {
+            return;
+          }
+          const data = await res.json();
+          setUser(data.user);
+        }
+        catch (error) {
+          console.error(error);
+        }
+        finally {
+          setLoading(false)
+        }
+      };
+  
+      checkUser();
+    }, []);
 
   // Fetch the lists of companies 
   useEffect(() => {
@@ -92,23 +115,40 @@ export default function CompaniesList() {
         List of companies
       </li>
 
-      <CompanyListSearch/>
+      <CompanyListSearch />
 
-      {sortedCompanies.map((company, index) => (
-        <li key={index} className="list-row" onClick={() => handleCompanyClick(company._id)}>
-          <div>
-            <div>
+      {sortedCompanies.map((company, index) => {
+        const isMatched = user?.matchedCompanies?.includes(company._id);
+
+        return (
+          <li
+            key={index}
+            className="list-row cursor-pointer hover:bg-base-200 transition"
+            onClick={() => handleCompanyClick(company._id)}
+          >
+            <div className="flex flex-col gap-1">
               <div className="font-semibold text-lg">{company.companyName}</div>
               <div className="text-xs uppercase font-semibold opacity-60">
-                {company.industry} 
+                {company.industry}
               </div>
-              <div className="text-sm mt-1 text-base-content/70">
-                {company.avgRating}/5{" "}
+              <div className="text-sm text-base-content/70">
+                {company.avgRating}/5
               </div>
-          </div>
-          </div>
-        </li>
-      ))}
+
+              {user && (
+                <div className="text-sm mt-1">
+                  {isMatched ? (
+                    <span className="text-green-500 font-bold">✅ Good fit</span>
+                  ) : (
+                    <span className="text-red-500">❌ Not a match</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
+
 }
