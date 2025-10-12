@@ -37,7 +37,9 @@ export default function ReviewsPage() {
     const params = new URLSearchParams();
     params.set("limit", "50");
     if (query.trim()) params.set("q", query.trim());
-    const res = await fetch(`/backend/reviews?${params.toString()}`, { cache: "no-store" });
+    const res = await fetch(`/backend/reviews?${params.toString()}`, {
+      cache: "no-store",
+    });
     const data = await res.json();
     const list: Review[] = data?.reviews ?? [];
     setReviews(list);
@@ -122,7 +124,9 @@ export default function ReviewsPage() {
     });
     if (res.ok) {
       setReviews((old) =>
-        old.map((r) => (r._id === id ? { ...r, comment, rating: draftRating } : r))
+        old.map((r) =>
+          r._id === id ? { ...r, comment, rating: draftRating } : r
+        )
       );
       cancelEdit();
       fetchTopCompanies();
@@ -150,7 +154,8 @@ export default function ReviewsPage() {
           </div>
           <Link
             href="/create_review"
-            className="btn btn-primary btn-md sm:btn-lg mt-6 px-6 text-base font-semibold shadow-md"
+            className="btn mt-6 px-6 text-base font-semibold shadow-md
+             bg-[#13AA52] hover:bg-[#0f8a43] text-white border-none"
           >
             Leave a review
           </Link>
@@ -267,7 +272,9 @@ function StarDisplay({ value }: { value: number }) {
         <div
           key={n}
           aria-label={`${n} star`}
-          className={`mask mask-star w-5 h-5 ${n <= v ? "bg-gray-300" : "bg-gray-100"}`}
+          className={`mask mask-star w-5 h-5 ${
+            n <= v ? "bg-gray-300" : "bg-gray-100"
+          }`}
           aria-current={n === v ? "true" : undefined}
         />
       ))}
@@ -332,8 +339,12 @@ function ReviewCard({
               maxLength={200}
             />
             <div className="flex gap-2 justify-end">
-              <button className="btn btn-ghost" onClick={onCancelEdit}>Cancel</button>
-              <button className="btn btn-primary" onClick={onSaveEdit}>Save</button>
+              <button className="btn btn-ghost" onClick={onCancelEdit}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={onSaveEdit}>
+                Save
+              </button>
             </div>
           </div>
         ) : (
@@ -343,8 +354,12 @@ function ReviewCard({
         {/* actions only if it's mine and not already in edit mode */}
         {review.mine && !isEditing && (
           <div className="mt-3 flex gap-2 justify-end">
-            <button className="btn btn-outline btn-sm" onClick={onStartEdit}>Edit</button>
-            <button className="btn btn-error btn-sm" onClick={onDelete}>Delete</button>
+            <button className="btn btn-outline btn-sm" onClick={onStartEdit}>
+              Edit
+            </button>
+            <button className="btn btn-error btn-sm" onClick={onDelete}>
+              Delete
+            </button>
           </div>
         )}
       </div>
