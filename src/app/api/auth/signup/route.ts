@@ -25,14 +25,26 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
-
+    let user;
     // Create new user
-    const user = {
-      email,
-      password,
-      role: role || "Student",
-      createdAt: new Date(),
-    };
+    if (role === "Student") {
+      user = {
+        email,
+        password,
+        role: role || "Student",
+        workPreference: null,
+        workAuthorization: null,
+        graduationYear: null,
+        createdAt: new Date(),
+      };
+    } else {
+      user = {
+        email,
+        password,
+        role: role,
+        createdAt: new Date(),
+      };
+    }
 
     const result = await usersCollection.insertOne(user);
 
