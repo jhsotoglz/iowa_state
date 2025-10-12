@@ -6,6 +6,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { ObjectId } from "mongodb";
 
+function isEmail(s: string) {
+  return /^\S+@\S+\.\S+$/.test(String(s || "").trim());
+}
+
 export async function GET(req: NextRequest) {
   try {
     const db = await getDb();
