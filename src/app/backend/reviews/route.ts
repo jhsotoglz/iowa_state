@@ -20,11 +20,14 @@ function toInt(n: unknown) {
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const companyName = searchParams.get("companyName");
+  const q = searchParams.get("q"); // <- single query param
   const limit = Math.min(Math.max(Number(searchParams.get("limit") ?? 100), 1), 200);
 
   const $match: any = {};
-  if (companyName) $match.companyName = { $regex: `^${companyName}$`, $options: "i" };
+  if (q && q.trim()) {
+    const rx = { $regex: q, $options: "i" }; // substring, case-insensitive
+    $match.$or = [{ companyName: rx }, { major: rx }];
+  }
 
   const dbo = await getDb();
   const cursor = dbo.collection("Reviews").aggregate([
@@ -34,7 +37,6 @@ export async function GET(req: NextRequest) {
     {
       $project: {
         _id: { $toString: "$_id" },
-        // email intentionally omitted
         companyName: 1,
         comment: 1,
         rating: 1,
@@ -47,6 +49,7 @@ export async function GET(req: NextRequest) {
   const reviews = await cursor.toArray();
   return NextResponse.json({ ok: true, reviews });
 }
+
 
 /* ---------- POST /backend/reviews ---------- */
 export async function POST(req: NextRequest) {
