@@ -62,8 +62,6 @@ export default function CreateReviewPage() {
           rating: Number(rating),
           ...(major ? { major } : {}),
         }),
-        // Only needed if your API is on a different origin:
-        // credentials: "include",
       });
 
       const data = await res.json();

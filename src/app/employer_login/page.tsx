@@ -18,20 +18,24 @@ export default function EmployerLogin() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role: "Employer" }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+          role: "Employer",
+        }),
       });
 
-      if (response.ok) {
-        router.push("/"); //main page or dashboard
-      } else {
-        const data = await response.json();
-        setError(data.error || "Login failed. Please try again");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Login failed. Please try again");
       }
-    } catch (error) {
-      setError("An error occurred. Please try again");
+
+      router.replace("/add_CompanyInfo");
+    } catch (err: any) {
+      setError(err.message || "An error occurred. Please try again");
     } finally {
       setLoading(false);
     }
@@ -67,7 +71,7 @@ export default function EmployerLogin() {
 
       if (response.ok) {
         // Auto-login after signup
-        router.push("/");
+        router.replace("/add_companyInfo");
       } else {
         const data = await response.json();
         setError(data.error || "Signup failed. Please try again");
