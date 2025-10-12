@@ -82,16 +82,10 @@ export default function home() {
           _id: c._id,
           count: c.count
         }))}
-        userType="admin"
+        userType=""
       />
     </div>
   </div>
-  <button
-    className="btn btn-primary absolute bottom-12 right-8 shadow-lg"
-    onClick={handleSave}
-  >
-    Save Map
-  </button>
 </main>
 
   );
