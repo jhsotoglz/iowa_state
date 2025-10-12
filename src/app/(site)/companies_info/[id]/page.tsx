@@ -9,6 +9,30 @@ export default function CompaniesInfo() {
   const [averageRating, setAverageRating] = useState(0);
   const [topMajors, setTopMajors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+
+  // Fetch the profile data
+  useEffect(() => {
+      const checkUser = async () => {
+        try {
+          const res = await fetch("/api/user");
+          if (!res.ok) {
+            return;
+          }
+          const data = await res.json();
+          setUser(data.user);
+          console.log("User", data)
+        }
+        catch (error) {
+          console.error(error);
+        }
+        finally {
+          setLoading(false)
+        }
+      };
+  
+      checkUser();
+    }, []);
 
   // Fetch the specific company data
   useEffect(() => {
@@ -56,13 +80,21 @@ export default function CompaniesInfo() {
     fetchCompanyRatingAndMajor();
   }, [company]);
 
-  if (loading) {
+  const isMatched = React.useMemo(() => {
+  if (!user || !company) return false;
+  return user.matchedCompanies?.includes(company._id) || false;
+}, [user, company]);
+
+console.log(isMatched)
+
+  if (loading || !company) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-base-200">
         <span className="loading loading-spinner loading-xl text-[#13AA52]"></span>
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-base-200 px-4">
@@ -103,16 +135,6 @@ export default function CompaniesInfo() {
             </span>
           </div>
 
-          {/* Company Size */}
-          <div>
-            <h2 className="text-2xl font-semibold text-[#0f8a43] mb-2">
-              Company Size
-            </h2>
-            <span className="font-medium text-base-content/70">
-              {company.companySize}
-            </span>
-          </div>
-
           {/* Website */}
           <div>
             <h2 className="text-2xl font-semibold text-[#0f8a43] mb-2">
@@ -131,18 +153,20 @@ export default function CompaniesInfo() {
           {/* Recruiter Info */}
           <div>
             <h2 className="text-2xl font-semibold text-[#0f8a43] mb-2">
-              Recruiter Info
+                Recruiter Info
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-2">
-              <span className="font-medium text-base-content/70">
-                {company.recruiterInfo.name}
-              </span>
-              <span className="font-medium text-base-content/70">
-                {company.recruiterInfo.email}
-              </span>
-              <span className="font-medium text-base-content/70">
-                {company.recruiterInfo.phone}
-              </span>
+                {company.recruiterInfo && company.recruiterInfo.length > 0 ? (
+                company.recruiterInfo.map((recruiter: string, index: number) => (
+                    <span key={index} className="font-medium text-base-content/70">
+                    {recruiter}
+                    </span>
+                ))
+                ) : (
+                <span className="font-medium text-base-content/50 italic">
+                    No recruiter info
+                </span>
+                )}
             </div>
           </div>
 
@@ -196,16 +220,6 @@ export default function CompaniesInfo() {
             </div>
           </div>
 
-          {/* Class Type */}
-          <div>
-            <h2 className="text-2xl font-semibold text-[#0f8a43] mb-2">
-              Class Type
-            </h2>
-            <p className="text-base-content/80">
-              Freshman, Sophomore, Junior, Senior
-            </p>
-          </div>
-
           {/* Hiring Info */}
           <div>
             <h2 className="text-2xl font-semibold text-[#0f8a43] mb-2">
@@ -220,15 +234,19 @@ export default function CompaniesInfo() {
           </div>
 
           {/* Fit */}
-          <div>
-            <h2 className="text-2xl font-semibold text-[#0f8a43] mb-2">
-              Do You Fit?
-            </h2>
-            <p className="text-base-content/80">
-              Based on your profile and interests, this company could be a great
-              match for your skillset.
+          {user && company ? (
+            <p className="flex items-center gap-2">
+              {isMatched ? (
+                <>
+                  <span className="text-green-500 font-bold">✅</span> You’re a good fit!
+                </>
+              ) : (
+                "Based on your profile, this company is not yet matched."
+              )}
             </p>
-          </div>
+          ) : (
+            <p className="text-base-content/50 italic">Loading fit info...</p>
+          )}
         </div>
       </div>
     </div>
