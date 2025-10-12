@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -19,11 +20,8 @@ export default function Profile() {
         }
         const data = await res.json();
         setUser(data.user);
-        console.log("Fetch User", data.user)
-
       }
       catch (error) {
-        // Redirect to the login if there is an error.
         console.error(error);
       }
       finally {
@@ -32,6 +30,33 @@ export default function Profile() {
     };
 
     checkUser();
+  }, []);
+
+  // Fetch the reviews of the user.
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await fetch("/backend/reviews");
+        if (!res.ok) {
+          return;
+        }
+        const data = await res.json();
+        
+        // Filter the data to just show the logged in user's
+        const myReviews = data.reviews.filter((review: any) => review.mine === true);
+        setReviews(myReviews);
+        console.log("Reviews: ", myReviews)
+
+      }
+      catch (error) {
+        console.error(error);
+      }
+      finally {
+        setLoading(false)
+      }
+    };
+
+    fetchReviews();
   }, []);
 
   // Logs out the user
@@ -108,23 +133,20 @@ const handleLogout = async () => {
         <div className="divider"></div>
 
         {/* Reviews Section */}
-        <h3 className="text-lg font-semibold text-secondary mb-3 text-left">Reviews</h3>
+        <h3 className="text-lg font-semibold text-secondary mb-3 text-center">Reviews</h3>
 
-        <ul className="space-y-3">
-          {/* Review 1 */}
-          <li className="p-3 rounded-lg bg-base-200 hover:bg-base-300 transition">
-            <div className="font-semibold text-base">TechCorp Inc.</div>
-            <div className="text-sm text-base-content/70">
-              “I hate their tech interviews — so unfair.”
-            </div>
-          </li>
-
-          {/* Review 2 */}
-          <li className="p-3 rounded-lg bg-base-200 hover:bg-base-300 transition">
-            <div className="font-semibold text-base">GreenTech Solutions</div>
-            <div className="text-sm text-base-content/70">“Company cool.”</div>
-          </li>
-        </ul>
+        {reviews.length === 0 ? (
+          <p className="text-sm text-base-content/70">You haven't submitted any reviews yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {reviews.map((review, index) => (
+              <li key={index} className="p-3 rounded-lg bg-base-200 hover:bg-base-300 transition">
+                <div className="font-semibold text-base">{review.companyName}</div>
+                <div className="text-sm text-base-content/70">“{review.comment}”</div>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="mt-6">
           <button
