@@ -17,12 +17,20 @@ export function calculateMatches(user: User, companies: Company[]): Company[] {
     return [];
   }
 
+  // Pre-normalize user data once (moved outside the loop)
+  const normalizedUserMajor = user.major.toUpperCase().replace(/\s+/g, "");
+  const normalizedUserPrefs = user.workPreferences.map((p) =>
+    p.toUpperCase().replace(/[-\s]/g, "")
+  );
+  const hasWorkAuth =
+    user.workAuthorization.includes("US Citizen") ||
+    user.workAuthorization.includes("Green Card");
+
   return companies.filter((company) => {
     // RULE 1: Major must match (absolute requirement)
     const hasMajorMatch = company.major.some(
       (companyMajor) =>
-        companyMajor.toUpperCase().replace(/\s+/g, "") ===
-        user.major.toUpperCase().replace(/\s+/g, "")
+        companyMajor.toUpperCase().replace(/\s+/g, "") === normalizedUserMajor
     );
 
     if (!hasMajorMatch) {
@@ -30,18 +38,11 @@ export function calculateMatches(user: User, companies: Company[]): Company[] {
     }
 
     // RULE 2: Visa sponsorship must match user's needs (absolute requirement)
-    const hasWorkAuth =
-      user.workAuthorization.includes("US Citizen") ||
-      user.workAuthorization.includes("Green Card");
-
     if (!hasWorkAuth && !company.sponsorVisa) {
       return false;
     }
 
     // RULE 3: Employment type must match (absolute requirement)
-    const normalizedUserPrefs = user.workPreferences.map((p) =>
-      p.toUpperCase().replace(/[-\s]/g, "")
-    );
     const normalizedCompanyTypes = company.employmentType.map((t) =>
       t.toUpperCase().replace(/[-\s]/g, "")
     );
