@@ -1,11 +1,64 @@
 "use client";
+
 import dynamic from "next/dynamic";
+import { useRef, useState, useEffect } from "react";
+import type { MarkerPosition } from "../frontend_components/floor_map";
+import * as L from "leaflet";
 
 const FloorMap = dynamic(() => import("../frontend_components/floor_map"), {
   ssr: false,
 });
 
-export default function adminMap() {
+export default function AdminMap() {
+  const floorMapRef = useRef<{ getMarkers: () => MarkerPosition[] }>(null);
+  const [companies, setCompanies] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/companyInfo")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Fetched company data:", data);
+        const companyList =
+          Array.isArray(data) && data[0]?.companies
+            ? data[0].companies
+            : Array.isArray(data)
+            ? data
+            : data.companies || [];
+
+        setCompanies(companyList);
+      })
+      .catch((err) => console.error("Error fetching company info:", err));
+  }, []);
+
+const handleSave = async () => {
+  const positions = floorMapRef.current?.getMarkers() || [];
+
+  try {
+    // Loop through each marker and send an update request
+    const updates = positions.map((marker) => {
+      return fetch(`/api/companyInfo/${marker.companyId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          boothNumber: {
+            lat: marker.lat,
+            lng: marker.lng,
+          },
+        }),
+      });
+    });
+
+    // Wait for all updates to complete
+    await Promise.all(updates);
+
+    alert("Booth numbers successfully updated!");
+  } catch (error) {
+    console.error("Error updating booth numbers:", error);
+    alert("Failed to update booth numbers.");
+  }
+};
+
+
   return (
     <div
       style={{
@@ -27,22 +80,34 @@ export default function adminMap() {
         }}
       >
         <FloorMap
+          ref={floorMapRef}
           imageUrl="/isu_floor.png"
           width={3000}
           height={1800}
-          companies={["Company 1", "Company 2", "Company 3", "Company 4"]}
+          companies={companies.map((c) => ({
+            companyName: c.companyName,
+            boothNumber: c.boothNumber,
+            majors: c.majors,
+            recruiterInfo: c.recruiterInfo?.name,
+            employmentType: c.employmentType,
+            industry: c.industry,
+            website: c.website,
+            position: null, 
+            _id: c._id,
+          }))}
         />
       </div>
+
       <div
         style={{
           position: "absolute",
           bottom: 10,
-          padding: 40,
+          padding: 55,
         }}
       >
         <button
           className="btn btn-xs sm:btn-sm md:btn-md lg:btn-lg xl:btn-xl"
-          onClick={() => alert("Map saved!")}
+          onClick={handleSave}
         >
           Save Map
         </button>
