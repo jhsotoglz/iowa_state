@@ -101,7 +101,7 @@ export default function ReviewsPage() {
           </div>
         ) : reviews.length === 0 ? (
           <div className="alert">
-            <span>No reviews match your search.</span>
+            <span>No reviews match your search!</span>
           </div>
         ) : (
           <ul className="space-y-3">
