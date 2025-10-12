@@ -35,7 +35,7 @@ export function useMatching(options: UseMatchingOptions = {}) {
 
   // Track previous matched companies to detect meaningful changes
   const prevMatchedCompaniesRef = useRef<string[]>([]);
-  const updateTimeoutRef = useRef<NodeJS.Timeout>();
+  const updateTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Fetch user data
   const fetchUser = useCallback(async () => {
