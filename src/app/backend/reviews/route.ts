@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/database/mongodb";
 import { ObjectId } from "mongodb";
-
+import { cookies } from "next/headers";
 /* ---------- simple helpers ---------- */
 function bad(status: number, message: string) {
   return NextResponse.json({ ok: false, error: message }, { status });
@@ -20,8 +20,11 @@ function toInt(n: unknown) {
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const q = searchParams.get("q");
-  const limit = Math.min(Math.max(Number(searchParams.get("limit") ?? 100), 1), 200);
+  const q = searchParams.get("q"); // <- single query param
+  const limit = Math.min(
+    Math.max(Number(searchParams.get("limit") ?? 100), 1),
+    200
+  );
 
   const dbo = await getDb();
   const coll = dbo.collection("Reviews");
@@ -40,28 +43,28 @@ export async function GET(req: NextRequest) {
                 path: "companyName",
                 query: q,
                 tokenOrder: "sequential",
-                fuzzy: { maxEdits: 2 } // tolerate typos like "tehc"
-              }
+                fuzzy: { maxEdits: 2 }, // tolerate typos like "tehc"
+              },
             },
             {
               autocomplete: {
                 path: "major",
                 query: q,
                 tokenOrder: "sequential",
-                fuzzy: { maxEdits: 2 }
-              }
+                fuzzy: { maxEdits: 2 },
+              },
             },
             {
               text: {
                 path: ["companyName", "major", "comment"],
                 query: q,
-                fuzzy: { maxEdits: 2 }
-              }
-            }
+                fuzzy: { maxEdits: 2 },
+              },
+            },
           ],
-          minimumShouldMatch: 1
-        }
-      }
+          minimumShouldMatch: 1,
+        },
+      },
     });
 
     // Rank by search score + recency
@@ -80,8 +83,8 @@ export async function GET(req: NextRequest) {
       comment: 1,
       rating: 1,
       major: 1,
-      createdAt: { $dateToString: { date: "$createdAt" } }
-    }
+      createdAt: { $dateToString: { date: "$createdAt" } },
+    },
   });
 
   const reviews = await coll.aggregate(pipeline).toArray();
@@ -89,20 +92,34 @@ export async function GET(req: NextRequest) {
 }
 
 /* ---------- POST /backend/reviews ---------- */
+
 export async function POST(req: NextRequest) {
+  // 👇 get email from cookie (trusted for your hackathon flow)
+  const email = (await cookies()).get("email")?.value;
+  if (!email) return bad(401, "Unauthorized");
+
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") return bad(400, "Invalid JSON body");
 
-  const { email, companyName, comment, rating, major } = body as Record<string, unknown>;
+  // 👇 no email in body anymore
+  const { companyName, comment, rating, major } = body as Record<
+    string,
+    unknown
+  >;
 
-  // Validation
-  if (typeof email !== "string" || !email.includes("@") || email.length > 120)
-    return bad(400, "A valid email is required");
-
-  if (typeof companyName !== "string" || companyName.trim().length === 0 || companyName.length > 100)
+  // Validation (drop email checks)
+  if (
+    typeof companyName !== "string" ||
+    companyName.trim().length === 0 ||
+    companyName.length > 100
+  )
     return bad(400, "companyName must be 1–100 chars");
 
-  if (typeof comment !== "string" || comment.trim().length === 0 || comment.length > 200)
+  if (
+    typeof comment !== "string" ||
+    comment.trim().length === 0 ||
+    comment.length > 200
+  )
     return bad(400, "comment must be 1–200 chars");
 
   const r = toInt(rating);
@@ -112,17 +129,20 @@ export async function POST(req: NextRequest) {
   if (major && (typeof major !== "string" || major.length > 16))
     return bad(400, "major must be ≤16 characters");
 
-  const dbo = await getDb();
-  const insert = await dbo.collection("Reviews").insertOne({
-    email,               // stored but never exposed in GET
+  const db = await getDb();
+  const insert = await db.collection("Reviews").insertOne({
+    email, // ← from cookie
     companyName,
     comment,
     rating: r,
-    major,
+    major: typeof major === "string" ? major : null,
     createdAt: new Date(),
   });
 
-  return NextResponse.json({ ok: true, id: insert.insertedId.toString() }, { status: 201 });
+  return NextResponse.json(
+    { ok: true, id: String(insert.insertedId) },
+    { status: 201 }
+  );
 }
 
 /* ---------- PATCH /backend/reviews ---------- */
@@ -130,14 +150,23 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") return bad(400, "Invalid JSON body");
 
-  const { _id, email, comment, rating, major } = body as Record<string, unknown>;
+  const { _id, email, comment, rating, major } = body as Record<
+    string,
+    unknown
+  >;
 
-  if (typeof email !== "string" || !email.includes("@")) return bad(400, "A valid email is required");
-  if (typeof _id !== "string" || !ObjectId.isValid(_id)) return bad(400, "Invalid review ID");
+  if (typeof email !== "string" || !email.includes("@"))
+    return bad(400, "A valid email is required");
+  if (typeof _id !== "string" || !ObjectId.isValid(_id))
+    return bad(400, "Invalid review ID");
 
   const update: Record<string, any> = {};
   if (comment !== undefined) {
-    if (typeof comment !== "string" || comment.trim().length === 0 || comment.length > 200)
+    if (
+      typeof comment !== "string" ||
+      comment.trim().length === 0 ||
+      comment.length > 200
+    )
       return bad(400, "comment must be 1–200 chars");
     update.comment = comment;
   }
@@ -152,15 +181,16 @@ export async function PATCH(req: NextRequest) {
       return bad(400, "major must be ≤16 chars");
     update.major = major;
   }
-  if (Object.keys(update).length === 0) return bad(400, "No valid fields provided for update");
+  if (Object.keys(update).length === 0)
+    return bad(400, "No valid fields provided for update");
 
   const dbo = await getDb();
-  const result = await dbo.collection("Reviews").updateOne(
-    { _id: new ObjectId(_id), email },
-    { $set: update }
-  );
+  const result = await dbo
+    .collection("Reviews")
+    .updateOne({ _id: new ObjectId(_id), email }, { $set: update });
 
-  if (result.matchedCount === 0) return bad(404, "Review not found or email mismatch");
+  if (result.matchedCount === 0)
+    return bad(404, "Review not found or email mismatch");
 
   return NextResponse.json({ ok: true, modified: result.modifiedCount });
 }
@@ -171,13 +201,18 @@ export async function DELETE(req: NextRequest) {
   if (!body || typeof body !== "object") return bad(400, "Invalid JSON body");
 
   const { _id, email } = body as Record<string, unknown>;
-  if (typeof email !== "string" || !email.includes("@")) return bad(400, "A valid email is required");
-  if (typeof _id !== "string" || !ObjectId.isValid(_id)) return bad(400, "Invalid review ID");
+  if (typeof email !== "string" || !email.includes("@"))
+    return bad(400, "A valid email is required");
+  if (typeof _id !== "string" || !ObjectId.isValid(_id))
+    return bad(400, "Invalid review ID");
 
   const dbo = await getDb();
-  const result = await dbo.collection("Reviews").deleteOne({ _id: new ObjectId(_id), email });
+  const result = await dbo
+    .collection("Reviews")
+    .deleteOne({ _id: new ObjectId(_id), email });
 
-  if (result.deletedCount === 0) return bad(404, "Review not found or email mismatch");
+  if (result.deletedCount === 0)
+    return bad(404, "Review not found or email mismatch");
 
   return NextResponse.json({ ok: true, deleted: true });
 }

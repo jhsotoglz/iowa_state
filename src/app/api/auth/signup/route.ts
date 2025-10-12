@@ -1,12 +1,17 @@
+// app/api/auth/signup/route.ts
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/database/mongodb";
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password, role } = await request.json();
+    const normEmail = String(email ?? "")
+      .trim()
+      .toLowerCase();
 
-    // Validate input
-    if (!email || !password) {
+    if (!normEmail || !password) {
       return NextResponse.json(
         { error: "Email, password are required" },
         { status: 400 }
@@ -14,12 +19,13 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDb();
-    const usersCollection = db.collection("UserProfile");
+    const users = db.collection("UserProfile");
 
-    // Check if user already exists
-    const existingUser = await usersCollection.findOne({ email });
+    // Ensure unique emails (safe to call repeatedly)
+    await users.createIndex({ email: 1 }, { unique: true });
 
-    if (existingUser) {
+    const existing = await users.findOne({ email: normEmail });
+    if (existing) {
       return NextResponse.json(
         { error: "User with this email already exists" },
         { status: 409 }
@@ -46,44 +52,21 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    const result = await usersCollection.insertOne(user);
+    const result = await users.insertOne(user);
 
-    // Generate token
-    const token = generateToken({
-      id: result.insertedId.toString(),
-      email: user.email,
-      role: user.role,
-    });
-
-    const response = NextResponse.json({
-      success: true,
-      user: {
-        id: result.insertedId.toString(),
-        email: user.email,
-        role: user.role,
+    return NextResponse.json(
+      {
+        success: true,
+        user: {
+          id: String(result.insertedId),
+          email: normEmail,
+          role: role || "Student",
+        },
       },
-    });
-
-    response.cookies.set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24 * 7,
-    });
-
-    return response;
-  } catch (error) {
-    console.error("Signup error:", error);
+      { status: 201 }
+    );
+  } catch (err) {
+    console.error("Signup error:", err);
     return NextResponse.json({ error: "Signup failed" }, { status: 500 });
   }
-}
-
-function generateToken(user: any) {
-  return Buffer.from(
-    JSON.stringify({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-    })
-  ).toString("base64");
 }

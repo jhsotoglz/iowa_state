@@ -37,7 +37,7 @@ export default function CreateReviewPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
-    //validation
+
     if (!companyName.trim() || !comment.trim() || rating === "") {
       setMsg({
         type: "err",
@@ -55,17 +55,29 @@ export default function CreateReviewPage() {
       const res = await fetch(ACTION_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // 👇 no email here
         body: JSON.stringify({
-          email: HARDCODED_EMAIL, // ← hardcoded email added
           companyName: companyName.trim(),
           comment: comment.trim(),
           rating: Number(rating),
-          // send only if chosen
           ...(major ? { major } : {}),
         }),
+        // Only needed if your API is on a different origin:
+        // credentials: "include",
       });
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Failed to create review");
+      if (!res.ok) {
+        if (res.status === 401) {
+          setMsg({ type: "err", text: "Please log in to submit a review." });
+        } else {
+          setMsg({
+            type: "err",
+            text: data?.error || "Failed to create review",
+          });
+        }
+        return;
+      }
 
       setMsg({ type: "ok", text: "Review created 🎉" });
       setCompanyName("");
