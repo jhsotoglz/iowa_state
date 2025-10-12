@@ -1,9 +1,16 @@
 "use client";
 
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
-import { MapContainer, ImageOverlay, Marker, Popup } from "react-leaflet";
+import {
+  MapContainer,
+  ImageOverlay,
+  Marker,
+  Popup,
+  useMap,
+} from "react-leaflet";
 import L, { LatLng } from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.heat";
 
 export interface MarkerPosition {
   name: string;
@@ -29,8 +36,8 @@ export interface Company {
   industry?: string;
   website?: string;
   _id?: Object;
+  count: number; // For heatmap intensity
 }
-
 
 const markerIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -41,91 +48,161 @@ const markerIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-const FloorMap = forwardRef<{ getMarkers: () => MarkerPosition[] }, FloorMapProps>(
-  ({ imageUrl, width, height, companies = [], userType }, ref) => {
-    if (!width || !height) {
-      return <p>Loading floor map...</p>;
-    }
+function HeatmapLayer({ points }: { points: [number, number, number][] }) {
+  const map = useMap();
 
-    const bounds: L.LatLngBoundsExpression = [
-      [0, 0],
-      [height, width],
-    ];
-    const center: L.LatLngExpression = [height / 2, width / 2];
-    const [markers, setMarkers] = useState<Company[]>([]);
+  useEffect(() => {
+    if (!points.length) return;
 
-    // Generate marker locations 
-    useEffect(() => {
-      if (companies.length > 0) {
-        const generatedMarkers = companies.map((company) => ({
-          ...company,
-          position: company.boothNumber
-            ? company.boothNumber 
-            : new L.LatLng(
-                Math.random() * height,
-                Math.random() * width
-              ), 
-        }));
+    const heatLayer = (L as any)
+      .heatLayer(points, {
+        radius: 20,
+        blur: 15,
+        maxZoom: 2,
+        gradient: {
+          0.2: "#0000ff", // deep blue
+          0.4: "#00ffff", // cyan
+          0.6: "#ffff00", // yellow
+          0.8: "#ff8000", // orange
+          1.0: "#ff0000", // red
+        },
+      })
+      .addTo(map);
 
-        setMarkers(generatedMarkers);
-      }
-    }, [companies, width, height]);
-
-    // Expose `getMarkers()` to parent via ref
-    useImperativeHandle(ref, () => ({
-      getMarkers: () =>
-        markers.map((m) => ({
-          name: m.companyName,
-          lat: m.boothNumber.lat,
-          lng: m.boothNumber.lng,
-          companyId: m._id
-        })),
-    }));
-
-    const handleDragEnd = (index: number, newPos: LatLng) => {
-      setMarkers((prev) => {
-        const updated = [...prev];
-        updated[index].boothNumber = newPos;
-        return updated;
-      });
+    return () => {
+      map.removeLayer(heatLayer);
     };
+  }, [points, map]);
 
-    return (
-      
-      <div style={{ height: "100%", width: "100%" }}>
-        <MapContainer
-          crs={L.CRS.Simple}
-          center={center}
-          zoom={0}
-          minZoom={-4}
-          maxZoom={2}
-          style={{ height: "100%", width: "100%", background: "#eaeaea" }}
-        >
-          <ImageOverlay url={imageUrl} bounds={bounds} />
-          {markers.map((m, i) => (
-            <Marker
-              key={i}
-              position={m.boothNumber}
-              icon={markerIcon}
-              draggable = {userType === "admin" ? true : false}
-              autoPan
-              eventHandlers={{
-                dragend: (e) => {
-                  const newLatLng = e.target.getLatLng();
-                  handleDragEnd(i, newLatLng);
-                },
-              }}
-            >
-              <Popup>
-                <b>{m.companyName}</b>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
-      </div>
-    );
+  return null;
+}
+
+const FloorMap = forwardRef<
+  { getMarkers: () => MarkerPosition[] },
+  FloorMapProps
+>(({ imageUrl, width, height, companies = [], userType }, ref) => {
+  if (!width || !height) {
+    return <p>Loading floor map...</p>;
   }
-);
 
+  const bounds: L.LatLngBoundsExpression = [
+    [0, 0],
+    [height, width],
+  ];
+  const center: L.LatLngExpression = [height / 2, width / 2];
+  const [markers, setMarkers] = useState<Company[]>([]);
+
+  // Generate marker locations
+  useEffect(() => {
+    if (companies.length > 0) {
+      const generatedMarkers = companies.map((company) => ({
+        ...company,
+        position: company.boothNumber
+          ? company.boothNumber
+          : new L.LatLng(Math.random() * height, Math.random() * width),
+      }));
+      setMarkers(generatedMarkers);
+    }
+  }, [companies, width, height]);
+
+  // Expose `getMarkers()` to parent via ref
+  useImperativeHandle(ref, () => ({
+    getMarkers: () =>
+      markers.map((m) => ({
+        name: m.companyName,
+        lat: m.boothNumber.lat,
+        lng: m.boothNumber.lng,
+        companyId: m._id,
+      })),
+  }));
+
+  const handleDragEnd = (index: number, newPos: LatLng) => {
+    setMarkers((prev) => {
+      const updated = [...prev];
+      updated[index].boothNumber = newPos;
+      return updated;
+    });
+  };
+
+  return (
+    <div style={{ height: "100%", width: "100%" }}>
+      <MapContainer
+        crs={L.CRS.Simple}
+        center={center}
+        zoom={0}
+        minZoom={-4}
+        maxZoom={2}
+        style={{ height: "100%", width: "100%", background: "#eaeaea" }}
+      >
+        <ImageOverlay url={imageUrl} bounds={bounds} />
+
+        <HeatmapLayer
+          points={markers.map((m) => [
+            m.boothNumber.lat,
+            m.boothNumber.lng,
+            m.count * 0.5,
+          ])}
+        />
+
+        {markers.map((m, i) => (
+          <Marker
+            key={i}
+            position={m.boothNumber}
+            icon={markerIcon}
+            draggable={userType === "admin"}
+            autoPan
+            eventHandlers={{
+              dragend: (e) => {
+                const newLatLng = e.target.getLatLng();
+                handleDragEnd(i, newLatLng);
+              },
+            }}
+          >
+            <Popup>
+              <div>
+                {m.companyName}
+                <br />
+                {m.majors && <span>Majors: {m.majors.join(", ")}</span>}
+                {m.recruiterInfo && <span>Recruiter: {m.recruiterInfo}</span>}
+                <br />
+                {m.employmentType && (
+                  <span>Employment Type: {m.employmentType.join(", ")}</span>
+                )}
+                <br />
+
+                {m.count && <span>Line Count: {m.count}</span>}
+                <br />
+                <button
+                  className="btn btn-sm btn-primary mt-2"
+                  onClick={() => {
+                    if (m.website) {
+                      window.open(m.website, "_blank");
+                    }
+                  }}
+                >
+                  Visit Website
+                </button>
+                <button
+                  className="btn btn-sm btn-primary mt-2 ml-3"
+                  onClick={() => {
+                    //Route to Review with comp id
+                  }}
+                >
+                  Review
+                </button>
+                <input
+                  type="checkbox"
+                  defaultChecked
+                  className="checkbox checkbox-neutral mt-2 ml-2"
+                />
+                <span className="mt-2 ml-2">In Line?</span>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+    </div>
+  );
+});
 
 export default FloorMap;
