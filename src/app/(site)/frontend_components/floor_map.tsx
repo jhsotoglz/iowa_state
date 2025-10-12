@@ -13,7 +13,6 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.heat";
 import { useRouter } from "next/navigation";
 
-
 export interface MarkerPosition {
   name: string;
   companyId?: Object;
@@ -42,7 +41,7 @@ export interface Company {
 }
 
 const markerIcon = new L.Icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [0, -41],
@@ -58,8 +57,8 @@ function HeatmapLayer({ points }: { points: [number, number, number][] }) {
 
     const heatLayer = (L as any)
       .heatLayer(points, {
-        radius: 20,
-        blur: 15,
+        radius: 50,
+        blur: 40,
         maxZoom: 2,
         gradient: {
           0.2: "#0000ff", // deep blue
@@ -128,7 +127,6 @@ const FloorMap = forwardRef<
   const router = useRouter();
 
   return (
-    
     <div style={{ height: "100%", width: "100%" }}>
       <MapContainer
         crs={L.CRS.Simple}
@@ -175,14 +173,14 @@ const FloorMap = forwardRef<
                 <br />
                 {m.count && <span>Line Count: {m.count}</span>}
                 <br />
-                <div className="flex items-center space-x-3 mt-2">
+                <div className="flex items-center space-x-2 mt-2">
                   <button
                     className="btn btn-sm btn-primary"
                     onClick={() => {
                       if (m.website) window.open(m.website, "_blank");
                     }}
                   >
-                    Visit Website
+                    Website
                   </button>
 
                   <button
@@ -192,10 +190,65 @@ const FloorMap = forwardRef<
                     Review
                   </button>
 
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => router.push(`/companies_info/${m._id}`)}
+                  >
+                    More
+                  </button>
+
                   <div className="flex items-center">
                     <input
                       type="checkbox"
                       className="checkbox checkbox-neutral"
+                      onChange={async (e) => {
+                        const checked = e.target.checked;
+
+                        // Optimistically update UI first
+                        setMarkers((prev) => {
+                          const updated = [...prev];
+                          updated[i] = {
+                            ...updated[i],
+                            count: checked
+                              ? (updated[i].count || 0) + 1
+                              : Math.max((updated[i].count || 1) - 1, 0),
+                          };
+                          return updated;
+                        });
+
+                        try {
+                          const res = await fetch("/api/companyInfo", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              id: m._id,
+                              updateData: {
+                                count: checked
+                                  ? (m.count || 0) + 1
+                                  : Math.max((m.count || 1) - 1, 0),
+                              },
+                            }),
+                          });
+
+                          const data = await res.json();
+                          console.log("PATCH response:", data);
+                        } catch (err) {
+                          console.error("Error updating count:", err);
+                          alert("Something went wrong updating count");
+
+                          // Roll back UI change if request failed
+                          setMarkers((prev) => {
+                            const updated = [...prev];
+                            updated[i] = {
+                              ...updated[i],
+                              count: checked
+                                ? Math.max((updated[i].count || 1) - 1, 0)
+                                : (updated[i].count || 0) + 1,
+                            };
+                            return updated;
+                          });
+                        }
+                      }}
                     />
                     <span className="ml-2">In Line?</span>
                   </div>
