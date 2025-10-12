@@ -86,11 +86,7 @@ export default function UserInfo() {
   };
 
   const handleWorkAuthorizationChange = (value: string) => {
-    setWorkAuthorization((prev) =>
-      prev.includes(value)
-        ? prev.filter((item) => item !== value)
-        : [...prev, value]
-    );
+    setWorkAuthorization([value]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -210,8 +206,9 @@ export default function UserInfo() {
                           className="label cursor-pointer justify-start gap-4"
                         >
                           <input
-                            type="checkbox"
-                            className="checkbox checkbox-primary"
+                            type="radio"
+                            name="workAuthorization"
+                            className="radio radio-primary"
                             checked={workAuthorization.includes(option)}
                             onChange={() =>
                               handleWorkAuthorizationChange(option)
@@ -233,7 +230,7 @@ export default function UserInfo() {
                   </label>
                   <select
                     className="select select-bordered w-full"
-                    value={major} 
+                    value={major}
                     onChange={(e) => setMajor(e.target.value)}
                   >
                     <option value="">Select a major</option>
