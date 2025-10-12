@@ -31,7 +31,7 @@ export default function LoginPage() {
             {/* Secondary / hover variant */}
             <button
               onClick={() => handleUserRoleSelection("Employer")}
-              className="btn w-full bg-[#0a5429] hover:bg-[#13AA52] text-white border-none"
+              className="btn w-full bg-[#0a5429] hover:bg-[#397f56] text-white border-none"
             >
               Employer
             </button>

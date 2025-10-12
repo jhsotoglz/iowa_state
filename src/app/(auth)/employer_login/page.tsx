@@ -164,7 +164,9 @@ export default function EmployerLogin() {
             <div className="form-control mt-6">
               <button
                 type="submit"
-                className={`btn btn-primary ${loading ? "loading" : ""}`}
+                className={`btn w-full bg-[#13AA52] hover:bg-[#0f8a43] text-white border-none ${
+                  loading ? "loading" : ""
+                }`}
                 disabled={loading}
               >
                 {loading
