@@ -20,36 +20,73 @@ function toInt(n: unknown) {
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const q = searchParams.get("q"); // <- single query param
+  const q = searchParams.get("q");
   const limit = Math.min(Math.max(Number(searchParams.get("limit") ?? 100), 1), 200);
 
-  const $match: any = {};
+  const dbo = await getDb();
+  const coll = dbo.collection("Reviews");
+
+  const pipeline: any[] = [];
+
   if (q && q.trim()) {
-    const rx = { $regex: q, $options: "i" }; // substring, case-insensitive
-    $match.$or = [{ companyName: rx }, { major: rx }];
+    // ---- Atlas Search (fuzzy + autocomplete + text) ----
+    pipeline.push({
+      $search: {
+        index: "reviews_search", // <- your Atlas Search index name
+        compound: {
+          should: [
+            {
+              autocomplete: {
+                path: "companyName",
+                query: q,
+                tokenOrder: "sequential",
+                fuzzy: { maxEdits: 2 } // tolerate typos like "tehc"
+              }
+            },
+            {
+              autocomplete: {
+                path: "major",
+                query: q,
+                tokenOrder: "sequential",
+                fuzzy: { maxEdits: 2 }
+              }
+            },
+            {
+              text: {
+                path: ["companyName", "major", "comment"],
+                query: q,
+                fuzzy: { maxEdits: 2 }
+              }
+            }
+          ],
+          minimumShouldMatch: 1
+        }
+      }
+    });
+
+    // Rank by search score + recency
+    pipeline.push({ $addFields: { _score: { $meta: "searchScore" } } });
+    pipeline.push({ $sort: { _score: -1, createdAt: -1 } });
+  } else {
+    // No query: newest first
+    pipeline.push({ $sort: { createdAt: -1 } });
   }
 
-  const dbo = await getDb();
-  const cursor = dbo.collection("Reviews").aggregate([
-    { $match },
-    { $sort: { createdAt: -1 } },
-    { $limit: limit },
-    {
-      $project: {
-        _id: { $toString: "$_id" },
-        companyName: 1,
-        comment: 1,
-        rating: 1,
-        major: 1,
-        createdAt: { $dateToString: { date: "$createdAt" } },
-      },
-    },
-  ]);
+  pipeline.push({ $limit: limit });
+  pipeline.push({
+    $project: {
+      _id: { $toString: "$_id" },
+      companyName: 1,
+      comment: 1,
+      rating: 1,
+      major: 1,
+      createdAt: { $dateToString: { date: "$createdAt" } }
+    }
+  });
 
-  const reviews = await cursor.toArray();
+  const reviews = await coll.aggregate(pipeline).toArray();
   return NextResponse.json({ ok: true, reviews });
 }
-
 
 /* ---------- POST /backend/reviews ---------- */
 export async function POST(req: NextRequest) {
