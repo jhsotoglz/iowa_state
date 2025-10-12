@@ -9,6 +9,30 @@ export default function CompaniesInfo() {
   const [averageRating, setAverageRating] = useState(0);
   const [topMajors, setTopMajors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+
+  // Fetch the profile data
+  useEffect(() => {
+      const checkUser = async () => {
+        try {
+          const res = await fetch("/api/user");
+          if (!res.ok) {
+            return;
+          }
+          const data = await res.json();
+          setUser(data.user);
+          console.log("User", data)
+        }
+        catch (error) {
+          console.error(error);
+        }
+        finally {
+          setLoading(false)
+        }
+      };
+  
+      checkUser();
+    }, []);
 
   // Fetch the specific company data
   useEffect(() => {
@@ -55,6 +79,11 @@ export default function CompaniesInfo() {
     };
     fetchCompanyRatingAndMajor();
   }, [company]);
+
+  const isMatched = React.useMemo(() => {
+  if (!user || !company) return false;
+  return user.matchedCompanies?.includes(company._id) || false;
+}, [user, company]);
 
   if (loading || !company) {
     return (
@@ -201,6 +230,21 @@ export default function CompaniesInfo() {
               </div>
             </div>
           </div>
+
+          {/* Fit */}
+          {user && company ? (
+            <p className="flex items-center gap-2">
+              {isMatched ? (
+                <>
+                  <span className="text-green-500 font-bold">✅</span> You’re a good fit!
+                </>
+              ) : (
+                "Based on your profile, this company is not yet matched."
+              )}
+            </p>
+          ) : (
+            <p className="text-base-content/50 italic">Loading fit info...</p>
+          )}
         </div>
       </div>
     </div>
