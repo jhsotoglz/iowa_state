@@ -6,6 +6,8 @@ export default function CompaniesInfo() {
     const params = useParams(); 
     const { id } = params;
     const [company, setCompany] = useState<any | null>(null);
+    const [averageRating, setAverageRating] = useState(0)
+    const [topMajors, setTopMajors] = useState([])
     const [isModalOpen, setIsModalOpen] = useState(false);
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
@@ -26,8 +28,35 @@ export default function CompaniesInfo() {
         }
     };
 
-    fetchCompany();
-  }, [id]);
+        fetchCompany();
+    }, [id]);
+
+    // Fetch the average rating and top majors for the company.
+    useEffect(() => {
+        if (!company?.companyName) return;
+
+        const fetchCompanyRatingAndMajor = async () => {
+        try {
+            const res = await fetch(`/backend/reviews/summary`); 
+            if (!res.ok) throw new Error("Failed to fetch");
+            const data = await res.json();
+
+            // Finds the rating for the specific given company.
+            const companyRating = data.companies.find(
+                (c: any) => c.companyName.toLowerCase() === company.companyName.toLowerCase()
+            );
+
+            setAverageRating(companyRating?.avgRating || 0);
+            setTopMajors(data.majors || []);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+        fetchCompanyRatingAndMajor();
+    }, [company]);
 
     if (loading) {
         return (
@@ -49,14 +78,21 @@ export default function CompaniesInfo() {
             <div className="space-y-6">
 
             <div>
-                <h2 className="text-2xl font-semibold text-secondary mb-2">
+            <h2 className="text-2xl font-semibold text-secondary mb-2">
                 Average Rating
-                </h2>
-                <div className="flex items-center gap-2">
-                <span className="font-medium text-base-content/70">(3/5)</span>
-                </div>
+            </h2>
+            <div className="flex items-center gap-2">
+                {averageRating > 0 ? (
+                <span className="font-medium text-base-content/70">
+                    ({averageRating}/5)
+                </span>
+                ) : (
+                <span className="font-medium text-base-content/50 italic">
+                    No ratings yet
+                </span>
+                )}
             </div>
-
+            </div>
 
             <div>
                 <h2 className="text-2xl font-semibold text-secondary mb-2">
@@ -111,14 +147,30 @@ export default function CompaniesInfo() {
 
             <div>
             <h2 className="text-2xl font-semibold text-secondary mb-2">
-                Majors
+                Top Majors
             </h2>
             <div className="flex flex-wrap gap-2">
-                {company.majors.map((major: string, index: number) => (
-                <div key={index} className="badge badge-outline">
+                {topMajors && topMajors.length > 0 ? (
+                topMajors.map((m: any, index: number) => (
+                    <div
+                    key={index}
+                    className="badge badge-outline tooltip"
+                    data-tip={`Average Rating: ${m.avgRating}/5`}
+                    >
+                    {m.major}
+                    </div>
+                ))
+                ) : company.majors && company.majors.length > 0 ? (
+                company.majors.map((major: string, index: number) => (
+                    <div key={index} className="badge badge-outline">
                     {major}
-                </div>
-                ))}
+                    </div>
+                ))
+                ) : (
+                <span className="font-medium text-base-content/50 italic">
+                    No majors listed
+                </span>
+                )}
             </div>
             </div>
 
@@ -127,9 +179,9 @@ export default function CompaniesInfo() {
                 Job Type
             </h2>
             <div className="flex flex-wrap gap-2">
-                {company.employmentType.map((major: string, index: number) => (
+                {company.employmentType.map((job: string, index: number) => (
                 <div key={index} className="badge badge-outline">
-                    {major}
+                    {job}
                 </div>
                 ))}
             </div>
