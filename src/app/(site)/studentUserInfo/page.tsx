@@ -24,7 +24,7 @@ export default function UserInfo() {
   const [graduationYear, setGraduationYear] = useState("");
   const [major, setMajor] = useState("");
 
-  // ISU College of Engineering majors (labels show the common ISU abbrev)
+  // ISU College of Engineering majors
   const majors = [
     { value: "AER E", label: "Aerospace Engineering (AER E)" },
     { value: "AG E", label: "Agricultural Engineering (AG E)" },
@@ -48,7 +48,7 @@ export default function UserInfo() {
     (currentYear + i).toString()
   );
 
-  // Fetch user data on mount
+  // Fetch user data
   useEffect(() => {
     fetchUserData();
   }, []);
@@ -56,15 +56,10 @@ export default function UserInfo() {
   const fetchUserData = async () => {
     try {
       const response = await fetch("/api/user");
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch user data");
-      }
+      if (!response.ok) throw new Error("Failed to fetch user data");
 
       const data = await response.json();
       setUserInfo(data.user);
-
-      // Set form state from fetched data
       setWorkPreference(data.user.workPreference || []);
       setWorkAuthorization(data.user.workAuthorization || []);
       setGraduationYear(data.user.graduationYear || "");
@@ -86,7 +81,11 @@ export default function UserInfo() {
   };
 
   const handleWorkAuthorizationChange = (value: string) => {
-    setWorkAuthorization([value]);
+    setWorkAuthorization((prev) =>
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value]
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,23 +93,8 @@ export default function UserInfo() {
     setSaving(true);
     setError("");
 
-    if (workPreference.length === 0) {
-      setError("Please select at least one work preference");
-      setSaving(false);
-      return;
-    }
-    if (workAuthorization.length === 0) {
-      setError("Please select at least one work authorization");
-      setSaving(false);
-      return;
-    }
-    if (!graduationYear) {
-      setError("Please select your graduation year");
-      setSaving(false);
-      return;
-    }
-    if (!major) {
-      setError("Please select your major");
+    if (!workPreference.length || !workAuthorization.length || !graduationYear || !major) {
+      setError("Please complete all required fields.");
       setSaving(false);
       return;
     }
@@ -118,9 +102,7 @@ export default function UserInfo() {
     try {
       const response = await fetch("/api/user", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           major,
           workPreference,
@@ -129,9 +111,7 @@ export default function UserInfo() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update user info");
-      }
+      if (!response.ok) throw new Error("Failed to update user info");
 
       alert("Profile updated successfully!");
       router.push("/home");
@@ -145,8 +125,8 @@ export default function UserInfo() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="flex justify-center items-center min-h-screen bg-base-200">
+        <span className="loading loading-spinner loading-lg text-[#13AA52]"></span>
       </div>
     );
   }
@@ -157,10 +137,12 @@ export default function UserInfo() {
         <div className="max-w-2xl mx-auto">
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title text-3xl mb-6">Update Your Profile</h2>
+              <h2 className="card-title text-3xl mb-6 text-[#13AA52]">
+                Update Your Profile
+              </h2>
 
               {error && (
-                <div className="alert alert-error mb-4">
+                <div className="alert bg-red-100 border-l-4 border-red-500 text-red-700 mb-4">
                   <span>{error}</span>
                 </div>
               )}
@@ -169,19 +151,19 @@ export default function UserInfo() {
                 {/* Work Preference */}
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text text-lg font-semibold">
+                    <span className="label-text text-lg font-semibold text-[#0f8a43]">
                       Work Preference
                     </span>
                   </label>
-                  <div className="space-y-2 space-x-2">
+                  <div className="space-y-2">
                     {["Internship", "Co-op", "Full-time"].map((option) => (
                       <label
                         key={option}
-                        className="label cursor-pointer justify-start gap-4"
+                        className="label cursor-pointer justify-start gap-3"
                       >
                         <input
                           type="checkbox"
-                          className="checkbox checkbox-primary"
+                          className="checkbox border-[#13AA52] checked:bg-[#13AA52]"
                           checked={workPreference.includes(option)}
                           onChange={() => handleWorkPreferenceChange(option)}
                         />
@@ -194,21 +176,20 @@ export default function UserInfo() {
                 {/* Work Authorization */}
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text text-lg font-semibold">
+                    <span className="label-text text-lg font-semibold text-[#0f8a43]">
                       Work Authorization
                     </span>
                   </label>
-                  <div className="space-y-2 space-x-2">
+                  <div className="space-y-2">
                     {["US Citizen", "Green Card", "H1B Visa", "OPT", "CPT"].map(
                       (option) => (
                         <label
                           key={option}
-                          className="label cursor-pointer justify-start gap-4"
+                          className="label cursor-pointer justify-start gap-3"
                         >
                           <input
-                            type="radio"
-                            name="workAuthorization"
-                            className="radio radio-primary"
+                            type="checkbox"
+                            className="checkbox border-[#13AA52] checked:bg-[#13AA52]"
                             checked={workAuthorization.includes(option)}
                             onChange={() =>
                               handleWorkAuthorizationChange(option)
@@ -224,12 +205,12 @@ export default function UserInfo() {
                 {/* Major */}
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text text-lg font-semibold">
+                    <span className="label-text text-lg font-semibold text-[#0f8a43]">
                       Major
                     </span>
                   </label>
                   <select
-                    className="select select-bordered w-full"
+                    className="select select-bordered w-full border-[#13AA52] focus:border-[#0f8a43]"
                     value={major}
                     onChange={(e) => setMajor(e.target.value)}
                   >
@@ -245,12 +226,12 @@ export default function UserInfo() {
                 {/* Graduation Year */}
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text text-lg font-semibold">
+                    <span className="label-text text-lg font-semibold text-[#0f8a43]">
                       Expected Graduation Year
                     </span>
                   </label>
                   <select
-                    className="select select-bordered w-full"
+                    className="select select-bordered w-full border-[#13AA52] focus:border-[#0f8a43]"
                     value={graduationYear}
                     onChange={(e) => setGraduationYear(e.target.value)}
                   >
@@ -267,7 +248,9 @@ export default function UserInfo() {
                 <div className="card-actions justify-end mt-8">
                   <button
                     type="submit"
-                    className={`btn btn-primary ${saving ? "loading" : ""}`}
+                    className={`btn w-full bg-[#13AA52] hover:bg-[#0f8a43] border-none text-white ${
+                      saving ? "loading" : ""
+                    }`}
                     disabled={saving}
                   >
                     {saving ? "Saving..." : "Save Changes"}
