@@ -29,38 +29,7 @@ export default function home() {
       .catch((err) => console.error("Error fetching company info:", err));
   }, []);
 
-  const handleSave = async () => {
-    const positions = floorMapRef.current?.getMarkers() || [];
 
-    try {
-      // Send PATCH requests for all markers in parallel
-      const updates = positions.map((marker) => {
-        console.log("Updating marker:", marker.companyId);
-        return fetch("/api/companyInfo", {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: marker.companyId,
-            updateData: {
-              boothNumber: {
-                lat: marker.lat,
-                lng: marker.lng,
-              },
-            },
-          }),
-        });
-      });
-
-      await Promise.all(updates);
-
-      alert("Booth numbers successfully updated!");
-    } catch (error) {
-      console.error("Error updating booth numbers:", error);
-      alert("Failed to update booth numbers.");
-    }
-  };
 
   return (
 <main className="relative min-h-screen bg-base-200 flex items-center justify-center p-6">
@@ -80,7 +49,8 @@ export default function home() {
           industry: c.industry,
           website: c.website,
           _id: c._id,
-          count: c.count
+          count: c.count,
+          review: c.review
         }))}
         userType=""
       />
