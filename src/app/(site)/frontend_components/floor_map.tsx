@@ -41,7 +41,8 @@ export interface Company {
 }
 
 const markerIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [0, -41],
@@ -175,7 +176,8 @@ const FloorMap = forwardRef<
                 <br />
                 <div className="flex items-center space-x-2 mt-2">
                   <button
-                    className="btn btn-sm btn-primary"
+                    className="btn btn-sm"
+                    style={{ background: "#13AA52" }}
                     onClick={() => {
                       if (m.website) window.open(m.website, "_blank");
                     }}
@@ -184,14 +186,16 @@ const FloorMap = forwardRef<
                   </button>
 
                   <button
-                    className="btn btn-sm btn-primary"
+                    className="btn btn-sm"
+                    style={{ background: "#13AA52" }}
                     onClick={() => router.push(`/create_review`)}
                   >
                     Review
                   </button>
 
                   <button
-                    className="btn btn-sm btn-primary"
+                    className="btn btn-sm"
+                    style={{ background: "#13AA52" }}
                     onClick={() => router.push(`/companies_info/${m._id}`)}
                   >
                     More
