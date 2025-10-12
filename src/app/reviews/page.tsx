@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 /* ---------- Types ---------- */
@@ -27,7 +28,9 @@ export default function ReviewsPage() {
     const params = new URLSearchParams();
     params.set("limit", "50");
     if (query.trim()) params.set("q", query.trim());
-    const res = await fetch(`/backend/reviews?${params.toString()}`, { cache: "no-store" });
+    const res = await fetch(`/backend/reviews?${params.toString()}`, {
+      cache: "no-store",
+    });
     const data = await res.json();
     const list: Review[] = data?.reviews ?? [];
     setReviews(list);
@@ -99,11 +102,17 @@ export default function ReviewsPage() {
     <main className="min-h-screen bg-base-200">
       <div className="mx-auto max-w-5xl p-6 space-y-4">
         {/* Header */}
-        <header className="flex items-center gap-3">
+        <header className="flex items-start justify-between gap-3 mt-[-0.5rem]">
           <div>
-            <h1 className="text-4xl font-bold mb-1">Student Reviews</h1>
-            <p className="opacity-70">Real-time feedback from the career fair</p>
+            <h1 className="text-5xl font-bold mb-1">Student Reviews</h1>
           </div>
+
+          <Link
+            href="/create_review"
+            className="btn btn-primary btn-md sm:btn-lg mt-6 px-6 text-base font-semibold shadow-md"
+          >
+            Leave a review
+          </Link>
         </header>
 
         {/* Search */}
@@ -206,7 +215,9 @@ function StarRating({ value }: { value: number }) {
         <div
           key={n}
           aria-label={`${n} star`}
-          className={`mask mask-star w-5 h-5 ${n <= v ? "bg-gray-300" : "bg-gray-100"}`}
+          className={`mask mask-star w-5 h-5 ${
+            n <= v ? "bg-gray-300" : "bg-gray-100"
+          }`}
           aria-current={n === v ? "true" : undefined}
         />
       ))}
