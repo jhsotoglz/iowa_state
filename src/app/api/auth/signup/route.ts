@@ -31,13 +31,28 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
+    let user;
+    // Create new user
+    if (role === "Student") {
+      user = {
+        email,
+        password,
+        role: role || "Student",
+        workPreference: null,
+        workAuthorization: null,
+        graduationYear: null,
+        createdAt: new Date(),
+      };
+    } else {
+      user = {
+        email,
+        password,
+        role: role,
+        createdAt: new Date(),
+      };
+    }
 
-    const result = await users.insertOne({
-      email: normEmail,
-      password, // ⚠️ hackathon only; use bcrypt later
-      role: role || "Student",
-      createdAt: new Date(),
-    });
+    const result = await users.insertOne(user);
 
     return NextResponse.json(
       {

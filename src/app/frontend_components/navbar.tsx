@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-export default function Navbar() {
+interface NavbarProps {
+  className?: string;
+}
+
+export default function Navbar({ className }: NavbarProps) {
   return (
     <nav className="fixed bottom-0 left-0 w-full bg-base-100 border-t border-gray-300 py-3 px-5">
       <ul className="flex justify-between sm:justify-around items-center max-w-md mx-auto">

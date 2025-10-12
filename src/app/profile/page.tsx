@@ -1,8 +1,10 @@
 "use client";
 import React from "react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Profile() {
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -30,6 +32,21 @@ export default function Profile() {
 
     checkUser();
   }, []);
+
+  // Logs out the user
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      if (res.ok) {
+        router.push("/login_page");
+      } else {
+        console.error("Logout failed");
+      }
+    } 
+    catch (err) {
+      console.error("Error during logout:", err);
+    }
+  };
   
   if (loading) {
     return (
@@ -54,6 +71,9 @@ export default function Profile() {
 
         {/* Info */}
         <h2 className="text-2xl font-bold text-primary mb-2">Your Profile</h2>
+        <p className="text-sm text-base-content/70 mb-1">
+          Role: <span className="font-semibold text-base-content">{user.role}</span>
+        </p>
         <p className="text-sm text-base-content/70 mb-1">
           Major: <span className="font-semibold text-base-content">{major}</span>
         </p>
@@ -90,6 +110,10 @@ export default function Profile() {
 
         <div className="mt-6">
           <button className="btn btn-primary w-full">Edit Profile</button>
+        </div>
+
+        <div className="mt-6">
+          <button onClick={handleLogout} className="btn btn-secondary w-full">Logout</button>
         </div>
       </div>
     </div>
