@@ -46,49 +46,48 @@ export default function CompanyListSearch() {
 
 
   return (
-<div className="dropdown w-full relative">
-  <label tabIndex={0} className="btn w-full justify-between">
-    {selectedCompany || "Select a company"}
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-4 w-4 ml-2 opacity-70"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-  </label>
+    <div className="dropdown w-60 mx-auto">
+      <label tabIndex={0} className="btn w-60 justify-center">
+        {selectedCompany || "Select a company"}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-4 w-4 ml-2 opacity-70"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </label>
 
-  <ul
-    className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm overflow-y-auto"
-  >
-    <li className="px-2">
-      <input
-        type="text"
-        placeholder="Search companies..."
-        className="input input-bordered input-sm w-full"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-    </li>
-
-    {filteredCompanies.length > 0 ? (
-      filteredCompanies.map((company) => (
-        <li key={company._id}>
-          <button
-            onClick={() => handleCompanyClick(company._id)}
-            className="w-full text-left"
-          >
-            {company.companyName}
-          </button>
+      <ul
+        className="menu dropdown-content bg-base-100 rounded-box z-10 w-60 p-2 shadow overflow-y-auto max-h-60 flex-nowrap"
+      >
+        <li className="px-2">
+          <input
+            type="text"
+            placeholder="Search companies..."
+            className="input input-bordered input-sm w-full"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </li>
-      ))
-    ) : (
-      <li className="text-center text-sm opacity-60">No companies found</li>
-    )}
-  </ul>
-</div>
 
+        {filteredCompanies.length > 0 ? (
+          filteredCompanies.map((company) => (
+            <li key={company._id}>
+              <button
+                onClick={() => handleCompanyClick(company._id)}
+                className="w-full text-left"
+              >
+                {company.companyName}
+              </button>
+            </li>
+          ))
+        ) : (
+          <li className="text-center text-sm opacity-60">No companies found</li>
+        )}
+      </ul>
+    </div>
   );
 }

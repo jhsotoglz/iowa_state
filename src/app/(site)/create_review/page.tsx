@@ -253,10 +253,10 @@ export default function CreateReviewPage() {
             {/* Comment */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-medium">Comment</span>
+                <span className="label-text font-medium">Comment *</span>
               </label>
               <textarea
-                className="textarea textarea-bordered h-28"
+                className="textarea textarea-bordered h-28 w-full"
                 placeholder="Share something helpful…"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
