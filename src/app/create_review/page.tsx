@@ -1,9 +1,10 @@
 // app/create_review/page.tsx
 "use client";
 import { useState } from "react";
+import StarRating from "../frontend_components/star_rating";
 
 const ACTION_URL = "/backend/reviews";
-
+const HARDCODED_EMAIL = "alice@example.com"; // ← change this
 // ISU College of Engineering majors (labels show the common ISU abbrev)
 const MAJORS = [
   { value: "AER E", label: "Aerospace Engineering (AER E)" },
@@ -23,6 +24,7 @@ const MAJORS = [
 ];
 
 export default function CreateReviewPage() {
+  //states
   const [companyName, setCompanyName] = useState("");
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState<number | "">("");
@@ -32,12 +34,10 @@ export default function CreateReviewPage() {
     null
   );
 
-  const remaining = 200 - comment.length;
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
-
+    //validation
     if (!companyName.trim() || !comment.trim() || rating === "") {
       setMsg({
         type: "err",
@@ -56,6 +56,7 @@ export default function CreateReviewPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          email: HARDCODED_EMAIL, // ← hardcoded email added
           companyName: companyName.trim(),
           comment: comment.trim(),
           rating: Number(rating),
@@ -93,7 +94,7 @@ export default function CreateReviewPage() {
               <span>{msg.text}</span>
             </div>
           )}
-
+          {/* Company Name */}
           <form className="space-y-4" onSubmit={onSubmit}>
             <div className="form-control">
               <label className="label">
@@ -101,23 +102,15 @@ export default function CreateReviewPage() {
               </label>
               <input
                 className="input input-bordered"
-                placeholder="e.g., TMC Transportation"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 required
               />
             </div>
-
+            {/* Comment */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-medium">Comment *(≤ 200)</span>
-                <span
-                  className={`label-text-alt ${
-                    remaining < 0 ? "text-error" : ""
-                  }`}
-                >
-                  {remaining}
-                </span>
+                <span className="label-text font-medium">Comment</span>
               </label>
               <textarea
                 className="textarea textarea-bordered h-28"
@@ -128,48 +121,42 @@ export default function CreateReviewPage() {
                 required
               />
             </div>
+            {/* Major */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">Major</span>
+              </label>
+              <select
+                className="select select-bordered"
+                value={major}
+                onChange={(e) => setMajor(e.target.value)}
+              >
+                <option value="">— Select Major —</option>
+                {MAJORS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {/* Rating */}
+            {/* Rating */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">Rating *</span>
+                {rating !== "" && (
+                  <span className="label-text-alt">({rating} / 5)</span>
+                )}
+              </label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-medium">Rating *</span>
-                </label>
-                <select
-                  className="select select-bordered"
-                  value={rating}
-                  onChange={(e) =>
-                    setRating(e.target.value ? Number(e.target.value) : "")
-                  }
-                  required
-                >
-                  <option value="">Select rating</option>
-                  {[1, 2, 3, 4, 5].map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <StarRating value={rating} onChange={(n) => setRating(n)} />
 
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-medium">
-                    Major (optional)
-                  </span>
-                </label>
-                <select
-                  className="select select-bordered"
-                  value={major}
-                  onChange={(e) => setMajor(e.target.value)}
-                >
-                  <option value="">— Select Major —</option>
-                  {MAJORS.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Hidden input to keep HTML form semantics if needed */}
+              <input
+                type="hidden"
+                name="rating"
+                value={rating === "" ? "" : String(rating)}
+              />
             </div>
 
             <div className="card-actions justify-end">
