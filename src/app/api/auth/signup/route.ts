@@ -3,12 +3,12 @@ import { getDb } from "@/database/mongodb";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name, role } = await request.json();
+    const { email, password, role } = await request.json();
 
     // Validate input
-    if (!email || !password || !name) {
+    if (!email || !password) {
       return NextResponse.json(
-        { error: "Email, password, and name are required" },
+        { error: "Email, password are required" },
         { status: 400 }
       );
     }
@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
     const user = {
       email,
       password,
-      name,
       role: role || "Student",
       createdAt: new Date(),
     };
@@ -42,7 +41,6 @@ export async function POST(request: NextRequest) {
       id: result.insertedId.toString(),
       email: user.email,
       role: user.role,
-      name: user.name,
     });
 
     const response = NextResponse.json({
@@ -51,7 +49,6 @@ export async function POST(request: NextRequest) {
         id: result.insertedId.toString(),
         email: user.email,
         role: user.role,
-        name: user.name,
       },
     });
 
