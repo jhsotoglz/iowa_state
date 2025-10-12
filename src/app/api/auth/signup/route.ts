@@ -4,6 +4,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/database/mongodb";
 
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password, role } = await request.json();

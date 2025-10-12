@@ -54,3 +54,49 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const emailFromCookie = (await cookies()).get("email")?.value;
+
+    if (!emailFromCookie) {
+      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+    }
+
+    // Get update fields from request body
+    const { workPreference, workAuthorization, graduationYear } =
+      await req.json();
+
+    // Update user in MongoDB using email
+    const db = await getDb();
+    const result = await db.collection("UserProfile").updateOne(
+      { email: emailFromCookie.trim().toLowerCase() },
+      {
+        $set: {
+          workPreference,
+          workAuthorization,
+          graduationYear,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "User updated successfully",
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

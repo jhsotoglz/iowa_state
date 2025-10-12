@@ -32,9 +32,20 @@ export default function StudentLogin() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok)
         throw new Error(data.error || "Login failed. Please try again.");
-      // success
-      router.replace("/view_reviews");
-      // router.refresh();  // if you read session on the server and need to refresh
+
+      const { user } = data;
+      if (
+        user &&
+        (!user.workAuthorization ||
+          !user.workPreference ||
+          !user.graduationYear)
+      ) {
+        router.replace("/studentUserInfo");
+      } else {
+        // success
+        router.replace("/view_reviews");
+        // router.refresh();  // if you read session on the server and need to refresh
+      }
     } catch (err: any) {
       setError(err.message || "An error occurred. Please try again.");
     } finally {
