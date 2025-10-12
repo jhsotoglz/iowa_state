@@ -5,24 +5,6 @@ import StarRating from "../frontend_components/star_rating";
 
 const ACTION_URL = "/backend/reviews";
 
-// ISU College of Engineering majors (labels show the common ISU abbrev)
-const MAJORS = [
-  { value: "AER E", label: "Aerospace Engineering (AER E)" },
-  { value: "AG E", label: "Agricultural Engineering (AG E)" },
-  { value: "BSE", label: "Biological Systems Engineering (BSE)" },
-  { value: "CH E", label: "Chemical Engineering (CH E)" },
-  { value: "C E", label: "Civil Engineering (C E)" },
-  { value: "CON E", label: "Construction Engineering (CON E)" },
-  { value: "CPR E", label: "Computer Engineering (CPR E)" },
-  { value: "CYB E", label: "Cybersecurity Engineering (CYB E)" },
-  { value: "E E", label: "Electrical Engineering (E E)" },
-  { value: "ENVE", label: "Environmental Engineering (ENVE)" },
-  { value: "I E", label: "Industrial Engineering (I E)" },
-  { value: "M S E", label: "Materials Engineering (M S E)" },
-  { value: "M E", label: "Mechanical Engineering (M E)" },
-  { value: "SE", label: "Software Engineering (SE)" },
-];
-
 type CompanyLite = { _id: string; companyName: string };
 
 export default function CreateReviewPage() {
@@ -42,6 +24,8 @@ export default function CreateReviewPage() {
   const [highlight, setHighlight] = useState(0);
   const blurTimeout = useRef<number | null>(null);
 
+  const [userMajor, setUserMajor] = useState<any>(null);
+
   // fetch companies once
   useEffect(() => {
     (async () => {
@@ -59,6 +43,26 @@ export default function CreateReviewPage() {
         setAllCompanies(list);
       } catch {}
     })();
+  }, []);
+
+  // Fetch the profile data
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const res = await fetch("/api/user");
+        if (!res.ok) {
+          return;
+        }
+        const data = await res.json();
+        setUserMajor(data.user.major);
+
+      }
+      catch (error) {
+        console.error(error);
+      }
+    };
+
+    checkUser();
   }, []);
 
   // filter suggestions (case-insensitive, substring)
@@ -147,7 +151,7 @@ export default function CreateReviewPage() {
           companyName: companyName.trim(),
           comment: comment.trim(),
           rating: Number(rating),
-          ...(major ? { major } : {}),
+          ...(userMajor ? { major: userMajor } : {}),
         }),
       });
 
@@ -261,25 +265,6 @@ export default function CreateReviewPage() {
                 maxLength={200}
                 required
               />
-            </div>
-
-            {/* Major */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Major</span>
-              </label>
-              <select
-                className="select select-bordered"
-                value={major}
-                onChange={(e) => setMajor(e.target.value)}
-              >
-                <option value="">— Select Major —</option>
-                {MAJORS.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
             </div>
 
             {/* Rating */}
