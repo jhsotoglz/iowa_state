@@ -19,6 +19,7 @@ export default function Profile() {
         }
         const data = await res.json();
         setUser(data.user);
+        console.log("Fetch User", data.user)
 
       }
       catch (error) {
@@ -61,10 +62,6 @@ const handleLogout = async () => {
     return <div className="flex justify-center items-center min-h-screen">No user found</div>;
   }
 
-  // Data that the profile shows
-  const {major, degreeLevel, graduationYear } = user.profile || {};
-
-
   return (
     <div className="min-h-screen bg-base-200 flex flex-col items-center py-8 px-4">
       {/* Profile Card */}
@@ -76,17 +73,37 @@ const handleLogout = async () => {
           Role: <span className="font-semibold text-base-content">{user.role}</span>
         </p>
         <p className="text-sm text-base-content/70 mb-1">
-          Major: <span className="font-semibold text-base-content">{major}</span>
+          Major: <span className="font-semibold text-base-content">{user.major}</span>
         </p>
         <p className="text-sm text-base-content/70 mb-4">
-          Degree: <span className="font-semibold text-base-content">{degreeLevel}</span>
+          Degree: <span className="font-semibold text-base-content">{user.graduationYear}</span>
         </p>
         <p className="text-sm text-base-content/70 mb-4">
-          Graduation Year: <span className="font-semibold text-base-content">{graduationYear}</span>
+          Graduation Year: <span className="font-semibold text-base-content">{user.graduationYear}</span>
         </p>
-        <p className="text-sm text-base-content/70 mb-4">
-          Employment Type: <span className="font-semibold text-base-content">Internship, Full-time</span>
-        </p>
+        {user && (
+          <>
+            {/* Employment Type */}
+            <div className="text-sm text-base-content/70 mb-4">
+              <span>Employment Type:</span>
+              <div className="font-semibold text-base-content mt-1 flex justify-center flex-wrap gap-2">
+                {user.workPreference.map((job: string, index: number) => (
+                  <span key={index}>{job}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Work Authorization */}
+            <div className="text-sm text-base-content/70 mb-4">
+              <span>Work Authorization:</span>
+              <div className="font-semibold text-base-content mt-1 flex justify-center flex-wrap gap-2">
+                {user.workAuthorization.map((auth: string, index: number) => (
+                  <span key={index}>{auth}</span>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="divider"></div>
 
@@ -110,7 +127,12 @@ const handleLogout = async () => {
         </ul>
 
         <div className="mt-6">
-          <button className="btn btn-primary w-full">Edit Profile</button>
+          <button
+            className="btn btn-primary w-full"
+            onClick={() => router.push("/studentUserInfo")}
+          >
+            Edit Profile
+          </button>
         </div>
 
         <div className="mt-6">
