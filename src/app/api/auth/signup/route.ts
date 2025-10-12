@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
         email,
         password,
         role: role || "Student",
+        major: null,
         workPreference: null,
         workAuthorization: null,
         graduationYear: null,

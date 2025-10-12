@@ -21,7 +21,6 @@ export default function CompanyListSearch() {
           return;
         }
         const data = await res.json();
-        console.log(data)
         setCompanyData(data.companies || []);
         setFilteredCompanies(data.companies || []);
       }

@@ -64,7 +64,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Get update fields from request body
-    const { workPreference, workAuthorization, graduationYear } =
+    const { workPreference, workAuthorization, graduationYear, major } =
       await req.json();
 
     // Update user in MongoDB using email
@@ -73,6 +73,7 @@ export async function PATCH(req: NextRequest) {
       { email: emailFromCookie.trim().toLowerCase() },
       {
         $set: {
+          major,
           workPreference,
           workAuthorization,
           graduationYear,
