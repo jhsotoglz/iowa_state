@@ -20,15 +20,18 @@ export default function LoginPage() {
         <div className="card-body">
           <h2 className="card-title text-center">Select Your Role</h2>
           <div className="flex flex-col gap-4 mt-4">
+            {/* Primary MongoDB Green Button */}
             <button
               onClick={() => handleUserRoleSelection("Student")}
-              className="btn btn-primary"
+              className="btn w-full bg-[#13AA52] hover:bg-[#0f8a43] text-white border-none"
             >
               Student
             </button>
+
+            {/* Secondary / hover variant */}
             <button
               onClick={() => handleUserRoleSelection("Employer")}
-              className="btn btn-secondary"
+              className="btn w-full bg-[#0a5429] hover:bg-[#13AA52] text-white border-none"
             >
               Employer
             </button>
