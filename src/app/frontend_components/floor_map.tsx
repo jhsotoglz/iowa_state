@@ -1,21 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { MapContainer, ImageOverlay, Marker, Popup } from "react-leaflet";
 import L, { LatLng } from "leaflet";
 import "leaflet/dist/leaflet.css";
+
+export interface MarkerPosition {
+  name: string;
+  companyId?: Object;
+  lat: number;
+  lng: number;
+}
 
 interface FloorMapProps {
   imageUrl: string;
   width: number;
   height: number;
-  companies?: string[];
+  companies: Company[];
+  userType: string;
 }
 
-interface MarkerData {
-  position: L.LatLng;
-  text: string;
+export interface Company {
+  companyName: string;
+  boothNumber: L.LatLng;
+  majors: string[];
+  recruiterInfo?: string;
+  employmentType?: string[];
+  industry?: string;
+  website?: string;
+  _id?: Object;
 }
+
 
 const markerIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -26,80 +41,91 @@ const markerIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-const FloorMap: React.FC<FloorMapProps> = ({ imageUrl, width, height, companies = [] }) => {
-  if (!width || !height) {
-    return <p>Loading floor map...</p>;
-  }
+const FloorMap = forwardRef<{ getMarkers: () => MarkerPosition[] }, FloorMapProps>(
+  ({ imageUrl, width, height, companies = [], userType }, ref) => {
+    if (!width || !height) {
+      return <p>Loading floor map...</p>;
+    }
 
-  const bounds: L.LatLngBoundsExpression = [
-    [0, 0],
-    [height, width],
-  ];
+    const bounds: L.LatLngBoundsExpression = [
+      [0, 0],
+      [height, width],
+    ];
+    const center: L.LatLngExpression = [height / 2, width / 2];
+    const [markers, setMarkers] = useState<Company[]>([]);
 
-  const center: L.LatLngExpression = [height / 2, width / 2];
-  const [markers, setMarkers] = useState<MarkerData[]>([]);
+    // Generate marker locations 
+    useEffect(() => {
+      if (companies.length > 0) {
+        const generatedMarkers = companies.map((company) => ({
+          ...company,
+          position: company.boothNumber
+            ? company.boothNumber 
+            : new L.LatLng(
+                Math.random() * height,
+                Math.random() * width
+              ), 
+        }));
 
-useEffect(() => {
-  if (companies.length > 0) {
-    const generatedMarkers = companies.map((name) => {
-      const x = Math.random() * width;
-      const y = Math.random() * height;
-      return {
-        position: new L.LatLng(y, x),
-        text: name,
-      };
-    });
-    setMarkers(generatedMarkers);
-  }
-}, [companies, width, height]);
+        setMarkers(generatedMarkers);
+      }
+    }, [companies, width, height]);
 
+    // Expose `getMarkers()` to parent via ref
+    useImperativeHandle(ref, () => ({
+      getMarkers: () =>
+        markers.map((m) => ({
+          name: m.companyName,
+          lat: m.boothNumber.lat,
+          lng: m.boothNumber.lng,
+          companyId: m._id
+        })),
+    }));
 
-  const handleDragEnd = (index: number, newPos: LatLng) => {
-    setMarkers((prev) => {
-      const updated = [...prev];
-      updated[index].position = newPos;
-      return updated;
-    });
-  };
+    const handleDragEnd = (index: number, newPos: LatLng) => {
+      setMarkers((prev) => {
+        const updated = [...prev];
+        updated[index].boothNumber = newPos;
+        return updated;
+      });
+    };
 
-return (
-  <div style={{ height: "100%", width: "100%" }}>
-    <MapContainer
-      crs={L.CRS.Simple}
-      center={center}
-      zoom={0}
-      minZoom={-4}
-      maxZoom={2}
-      style={{
-        height: "100%",
-        width: "100%",
-        background: "#eaeaea", // optional fallback background
-      }}
-    >
-      <ImageOverlay url={imageUrl} bounds={bounds} />
-      {markers.map((m, i) => (
-        <Marker
-          key={i}
-          position={m.position}
-          icon={markerIcon}
-          draggable
-          autoPan
-          eventHandlers={{
-            dragend: (e) => {
-              const newLatLng = e.target.getLatLng();
-              handleDragEnd(i, newLatLng);
-            },
-          }}
+    return (
+      
+      <div style={{ height: "100%", width: "100%" }}>
+        <MapContainer
+          crs={L.CRS.Simple}
+          center={center}
+          zoom={0}
+          minZoom={-4}
+          maxZoom={2}
+          style={{ height: "100%", width: "100%", background: "#eaeaea" }}
         >
-          <Popup>
-            <b>{m.text}</b>
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
-  </div>
+          <ImageOverlay url={imageUrl} bounds={bounds} />
+          {markers.map((m, i) => (
+            <Marker
+              key={i}
+              position={m.boothNumber}
+              icon={markerIcon}
+              draggable = {userType === "admin" ? true : false}
+              autoPan
+              eventHandlers={{
+                dragend: (e) => {
+                  const newLatLng = e.target.getLatLng();
+                  handleDragEnd(i, newLatLng);
+                },
+              }}
+            >
+              <Popup>
+                <b>{m.companyName}</b>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
+    );
+  }
 );
 
-};
 
 export default FloorMap;
