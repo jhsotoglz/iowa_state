@@ -1,7 +1,52 @@
 "use client";
 import React from "react";
+import { useEffect, useState } from "react";
 
-export default function CompaniesList() {
+export default function Profile() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Fetch the profile data
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const res = await fetch("/api/user");
+        if (!res.ok) {
+          return;
+        }
+        const data = await res.json();
+        setUser(data.user);
+
+      }
+      catch (error) {
+        // Redirect to the login if there is an error.
+        console.error(error);
+      }
+      finally {
+        setLoading(false)
+      }
+    };
+
+    checkUser();
+  }, []);
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-base-200">
+        <span className="loading loading-spinner loading-xl text-primary"></span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <div className="flex justify-center items-center min-h-screen">No user found</div>;
+  }
+
+  // Data that the profile shows
+  const {major, degreeLevel, graduationYear } = user.profile || {};
+
+
   return (
     <div className="min-h-screen bg-base-200 flex flex-col items-center py-8 px-4">
       {/* Profile Card */}
@@ -10,7 +55,13 @@ export default function CompaniesList() {
         {/* Info */}
         <h2 className="text-2xl font-bold text-primary mb-2">Your Profile</h2>
         <p className="text-sm text-base-content/70 mb-1">
-          Major: <span className="font-semibold text-base-content">Software Engineering</span>
+          Major: <span className="font-semibold text-base-content">{major}</span>
+        </p>
+        <p className="text-sm text-base-content/70 mb-4">
+          Degree: <span className="font-semibold text-base-content">{degreeLevel}</span>
+        </p>
+        <p className="text-sm text-base-content/70 mb-4">
+          Graduation Year: <span className="font-semibold text-base-content">{graduationYear}</span>
         </p>
         <p className="text-sm text-base-content/70 mb-4">
           Employment Type: <span className="font-semibold text-base-content">Internship, Full-time</span>
