@@ -45,15 +45,9 @@ export default function CompaniesInfo() {
             const companyRating = data.companies.find(
                 (c: any) => c.companyName.toLowerCase() === company.companyName.toLowerCase()
             );
-            
-
-            // Find majors mentioned in reviews for this company if available
-            const companyMajors = data.majors.filter((m: any) =>
-                m.companyName?.toLowerCase() === company.companyName.toLowerCase()
-            );
 
             setAverageRating(companyRating?.avgRating || 0);
-            
+
             // Use majors only if the current company has ratings
             if (companyRating) {
                 setTopMajors(data.majors || []);
@@ -147,16 +141,17 @@ export default function CompaniesInfo() {
             <h2 className="text-2xl font-semibold text-secondary mb-2">
                 Recruiter Info
             </h2>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-2">
-                <span className="font-medium text-base-content/70">
-                {company.recruiterInfo.name}
-                </span>
-                <span className="font-medium text-base-content/70">
-                {company.recruiterInfo.email}
-                </span>
-                <span className="font-medium text-base-content/70">
-                {company.recruiterInfo.phone}
-                </span>
+            <div className="flex flex-col gap-4">
+                {company.recruiterInfo?.map((recruiter: any, index: number) => (
+                <div
+                    key={index}
+                    className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-2"
+                >
+                    <span className="font-medium text-base-content/70">{recruiter.name}</span>
+                    <span className="font-medium text-base-content/70">{recruiter.email}</span>
+                    <span className="font-medium text-base-content/70">{recruiter.phone}</span>
+                </div>
+                ))}
             </div>
             </div>
 
@@ -212,32 +207,11 @@ export default function CompaniesInfo() {
             </div>
 
             <div>
-                <h2 className="text-2xl font-semibold text-secondary mb-2">
-                    Hiring Info
-                </h2>
-
-                <div className="flex flex-col gap-4">
-                    <div className="flex flex-wrap gap-2">
-                    {company.hiringFor.roles.map((role: string, index: number) => (
-                        <div key={index} className="badge badge-outline">
-                        {role}
-                        </div>
-                    ))}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                    {company.hiringFor.locations.map((location: string, index: number) => (
-                        <div key={index} className="badge badge-outline">
-                        {location}
-                        </div>
-                    ))}
-                    </div>
 
                     <div>
-                    <span className="font-semibold">Visa Sponsor:</span>{" "}
-                    {company.hiringFor.sponsorsVisa ? "Yes" : "No"}
+                    <h2 className="text-2xl font-semibold text-secondary mb-2">Visa Sponsor:</h2>
+                    {company.sponsorVisa ? "Yes" : "No"}
                     </div>
-                </div>
             </div>
 
             <div>
