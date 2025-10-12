@@ -1,6 +1,6 @@
-// app/add_employer/page.tsx
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const ACTION_URL = "/api/companyInfo";
 const INDUSTRIES = [
@@ -47,28 +47,20 @@ const EMP_TYPES = ["Internship", "Co-op", "Full-time", "Part-time"] as const;
 type Recruiter = { name: string; email: string; phone: string };
 
 export default function NewCompanyPage() {
+  const router = useRouter();
   const [companyName, setCompanyName] = useState("");
   const [industry, setIndustry] = useState("");
   const [sponsorVisa, setSponsorVisa] = useState(false);
   const [url, setUrl] = useState("");
-
-  // majors (select + Add -> chips)
   const [majors, setMajors] = useState<string[]>([]);
   const [selectedMajor, setSelectedMajor] = useState<string>("");
-
-  // employment type (checkbox group)
   const [employmentTypes, setEmploymentTypes] = useState<string[]>([]);
-
-  // recruiter being edited in the form
   const [recruiterDraft, setRecruiterDraft] = useState<Recruiter>({
     name: "",
     email: "",
     phone: "",
   });
-
-  // list shown BELOW the form
   const [recruiters, setRecruiters] = useState<Recruiter[]>([]);
-
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(
     null
@@ -80,6 +72,7 @@ export default function NewCompanyPage() {
       setMajors((p) => [...p, selectedMajor]);
     setSelectedMajor("");
   }
+
   function removeMajor(v: string) {
     setMajors((p) => p.filter((m) => m !== v));
   }
@@ -123,8 +116,6 @@ export default function NewCompanyPage() {
       return;
     }
 
-    // If there are added recruiters, use the first one as primary recruiterInfo.
-    // Otherwise fall back to whatever is in the draft fields.
     const primary: Recruiter =
       recruiters[0] ??
       ({
@@ -140,6 +131,7 @@ export default function NewCompanyPage() {
       });
       return;
     }
+
     if (!isEmail(primary.email)) {
       setMsg({ type: "err", text: "Primary recruiter needs a valid email." });
       return;
@@ -155,11 +147,11 @@ export default function NewCompanyPage() {
           website: url.trim() || null,
           industry: industry || null,
           sponsorVisa,
-          boothNumber: null, // or whatever you collect later
+          boothNumber: null,
           majors,
           employmentTypes,
-          recruiters, // array from your scroll list
-          count: 0, // optional; server will default to 0
+          recruiters,
+          count: 0,
         }),
       });
 
@@ -168,7 +160,10 @@ export default function NewCompanyPage() {
 
       setMsg({ type: "ok", text: "Saved ✅" });
 
-      // reset
+      setTimeout(() => {
+        router.push("/home");
+      }, 1000);
+
       setCompanyName("");
       setUrl("");
       setMajors([]);
@@ -199,7 +194,6 @@ export default function NewCompanyPage() {
             </div>
           )}
 
-          {/* --------------------- FORM --------------------- */}
           <form className="space-y-4" onSubmit={onSubmit}>
             <input
               className="input input-bordered w-full"
@@ -209,7 +203,6 @@ export default function NewCompanyPage() {
               required
             />
 
-            {/* Majors select + Add */}
             <div className="space-y-2">
               <div className="join w-full">
                 <select
@@ -219,7 +212,7 @@ export default function NewCompanyPage() {
                 >
                   <option value="">— Select Major —</option>
                   {MAJORS.map((m) => (
-                    <option key={m.value} value={m.value}>
+                    <option key={m.value} value={m.label}>
                       {m.label}
                     </option>
                   ))}
@@ -257,7 +250,6 @@ export default function NewCompanyPage() {
               </div>
             </div>
 
-            {/* Recruiter Info (entry form; stays enabled) */}
             <div className="p-3 rounded-lg border bg-base-200">
               <div className="font-semibold mb-3">Recruiter Info</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -299,6 +291,7 @@ export default function NewCompanyPage() {
                 </button>
               </div>
             </div>
+
             <div className="mt-6 p-3 rounded-lg border bg-base-200">
               <div className="font-semibold mb-2">Recruiters</div>
               <div className="max-h-56 overflow-y-auto pr-1">
@@ -330,7 +323,7 @@ export default function NewCompanyPage() {
                 )}
               </div>
             </div>
-            {/* Employment Types (checkbox group) */}
+
             <div className="form-control">
               <label className="label pb-1">
                 <span className="label-text font-medium">Employment Type</span>
@@ -343,7 +336,7 @@ export default function NewCompanyPage() {
                   >
                     <input
                       type="checkbox"
-                      className="checkbox checkbox-primary"
+                      className="checkbox [--chkbg:#13AA52] [--chkfg:white] hover:[--chkbg:#0E7A3E]"
                       checked={employmentTypes.includes(t)}
                       onChange={() => toggleEmpType(t)}
                     />
@@ -353,7 +346,6 @@ export default function NewCompanyPage() {
               </div>
             </div>
 
-            {/* Industry select */}
             <div className="form-control">
               <label className="label pb-1">
                 <span className="label-text font-medium">Industry</span>
@@ -372,12 +364,11 @@ export default function NewCompanyPage() {
               </select>
             </div>
 
-            {/* Sponsor Visa checkbox */}
             <div className="form-control mt-3">
               <label className="label cursor-pointer justify-start gap-3">
                 <input
                   type="checkbox"
-                  className="checkbox checkbox-primary"
+                  className="checkbox [--chkbg:#13AA52] [--chkfg:white] hover:[--chkbg:#0E7A3E]"
                   checked={sponsorVisa}
                   onChange={(e) => setSponsorVisa(e.target.checked)}
                 />
@@ -387,7 +378,6 @@ export default function NewCompanyPage() {
               </label>
             </div>
 
-            {/* URL */}
             <input
               className="input input-bordered w-full"
               placeholder="Company Website URL"
@@ -397,15 +387,14 @@ export default function NewCompanyPage() {
             />
 
             <div className="card-actions justify-end">
-              <button className="btn btn-primary" disabled={submitting}>
+              <button
+                className="btn [--btn-bg:#13AA52] [--btn-border-color:#13AA52] hover:[--btn-bg:#0E7A3E] hover:[--btn-border-color:#0E7A3E]"
+                disabled={submitting}
+              >
                 {submitting ? "Saving…" : "Save"}
               </button>
             </div>
           </form>
-          {/* ------------------- /FORM ------------------- */}
-
-          {/* Recruiters list BELOW the form (scrollable) */}
-          {/* --------------------------------------------- */}
         </div>
       </div>
     </main>
