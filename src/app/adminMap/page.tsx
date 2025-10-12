@@ -98,7 +98,6 @@ const handleSave = async () => {
             employmentType: c.employmentType,
             industry: c.industry,
             website: c.website,
-            position: null, 
             _id: c._id,
           }))}
           userType="admin"
