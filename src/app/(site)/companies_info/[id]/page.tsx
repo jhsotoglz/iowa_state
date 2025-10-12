@@ -47,7 +47,16 @@ export default function CompaniesInfo() {
             );
 
             setAverageRating(companyRating?.avgRating || 0);
-            setTopMajors(data.majors || []);
+
+            // Use majors only if the current company has ratings
+            if (companyRating) {
+                setTopMajors(data.majors || []);
+            } 
+            else {
+                setTopMajors([]);
+            }
+
+            console.log("Majors", data)
         } catch (err) {
             console.error(err);
         } finally {
