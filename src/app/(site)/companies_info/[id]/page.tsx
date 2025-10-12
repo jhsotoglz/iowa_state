@@ -156,7 +156,7 @@ export default function CompaniesInfo() {
                 topMajors.map((m: any, index: number) => (
                   <div
                     key={index}
-                    className="badge badge-outline border-[#0f8a43] text-[#0f8a43] tooltip"
+                    className="badge badge-outline tooltip"
                     data-tip={`Average Rating: ${m.avgRating}/5`}
                   >
                     {m.major}
