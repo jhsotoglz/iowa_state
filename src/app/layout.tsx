@@ -28,7 +28,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}
       >
-        <div className="pb-14"> {/* padding-bottom = navbar height */}
+        <div className="pb-14"> 
           {children}
         </div>
         <Navbar className="fixed bottom-0 w-full" />
