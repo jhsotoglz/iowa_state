@@ -29,6 +29,9 @@ export async function POST(request: NextRequest) {
       email: user.email,
       role: user.role,
       name: user.name,
+      workPreference: user.workPreference,
+      workAuthorization: user.workAuthorization,
+      graduationYear: user.graduationYear,
     },
   });
 

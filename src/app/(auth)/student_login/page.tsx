@@ -34,7 +34,7 @@ export default function StudentLogin() {
         throw new Error(data.error || "Login failed. Please try again.");
 
       const { user } = data;
-      console.log(data);
+
       if (
         user &&
         (!user.workAuthorization ||
