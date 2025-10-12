@@ -12,7 +12,7 @@ export default function Navbar({ className = "" }: NavbarProps) {
 
   const items = [
     { href: "/view_reviews", label: "Reviews" },
-    { href: "/", label: "Home" },
+    { href: "/home", label: "Home" },
     { href: "/companies_list", label: "Companies" },
     { href: "/profile", label: "Profile" },
   ];
