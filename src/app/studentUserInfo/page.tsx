@@ -150,7 +150,7 @@ export default function UserInfo() {
                       Work Preference
                     </span>
                   </label>
-                  <div className="space-y-2 space-x-3">
+                  <div className="space-y-2 space-x-2">
                     {["Internship", "Co-op", "Full-time"].map((option) => (
                       <label
                         key={option}
@@ -175,7 +175,7 @@ export default function UserInfo() {
                       Work Authorization
                     </span>
                   </label>
-                  <div className="space-y-2 space-x-3">
+                  <div className="space-y-2 space-x-2">
                     {["US Citizen", "Green Card", "H1B Visa", "OPT", "CPT"].map(
                       (option) => (
                         <label
