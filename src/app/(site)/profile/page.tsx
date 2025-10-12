@@ -93,7 +93,7 @@ const handleLogout = async () => {
       <div className="bg-base-100 rounded-2xl shadow-xl p-6 w-full max-w-md text-center">
 
         {/* Info */}
-        <h2 className="text-2xl font-bold text-primary mb-2">Your Profile</h2>
+        <h2 className="text-2xl font-bold mb-2  text-green-500">Your Profile</h2>
         <p className="text-sm text-base-content/70 mb-1">
           Role: <span className="font-semibold text-base-content">{user.role}</span>
         </p>
@@ -133,7 +133,7 @@ const handleLogout = async () => {
         <div className="divider"></div>
 
         {/* Reviews Section */}
-        <h3 className="text-lg font-semibold text-secondary mb-3 text-center">Reviews</h3>
+        <h3 className="text-2xl font-semibold text-green-500 mb-3 text-center">Reviews</h3>
 
         {reviews.length === 0 ? (
           <p className="text-sm text-base-content/70">You haven't submitted any reviews yet.</p>
@@ -148,17 +148,24 @@ const handleLogout = async () => {
           </ul>
         )}
 
-        <div className="mt-6">
+        <div className="divider"></div>
+
+        <div>
           <button
-            className="btn btn-primary w-full"
+              className="btn mt-3 px-6 text-base font-semibold shadow-md
+             bg-[#13AA52] hover:bg-[#0f8a43] text-white border-none"
             onClick={() => router.push("/studentUserInfo")}
           >
             Edit Profile
           </button>
         </div>
 
-        <div className="mt-6">
-          <button onClick={handleLogout} className="btn btn-secondary w-full">Logout</button>
+        <div>
+          <button onClick={handleLogout} 
+            className="btn mt-3 px-6 text-base font-semibold shadow-md
+             bg-[#fc000d] hover:bg-[#980207] text-white border-none">
+            Logout
+          </button>
         </div>
       </div>
     </div>
