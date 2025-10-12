@@ -26,10 +26,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}
       >
-        {children}
-        <Navbar/>
+        <div className="pb-14"> {/* padding-bottom = navbar height */}
+          {children}
+        </div>
+        <Navbar className="fixed bottom-0 w-full" />
       </body>
     </html>
   );
