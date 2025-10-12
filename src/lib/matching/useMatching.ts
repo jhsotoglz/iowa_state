@@ -20,6 +20,7 @@ export function useMatching(refreshInterval = 10000) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   // Fetch user data
   const fetchUser = async () => {
     try {
@@ -84,15 +85,47 @@ export function useMatching(refreshInterval = 10000) {
   // Calculate matches dynamically
   const matchedCompanies = useMemo(() => {
     if (!user || !companies.length) return [];
-    return calculateMatches(user, companies);
+    const matches = calculateMatches(user, companies);
+    return matches;
   }, [user, companies]);
+
+  // Update matchedCompanies in database whenever matches change
+  useEffect(() => {
+    const updateMatchesInDB = async () => {
+      if (matchedCompanies.length === 0) return;
+
+      try {
+        // Extract company names instead of IDs
+        const companyNames = matchedCompanies.map((c) => c.name);
+        console.log("Updating matchedCompanies in DB:", companyNames);
+
+        const res = await fetch("/api/matchingAlgo", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            matchedCompanies: companyNames,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to update matched companies");
+        }
+
+        const result = await res.json();
+        console.log("Successfully updated matchedCompanies:", result);
+      } catch (err) {
+        console.error("Error updating matched companies:", err);
+      }
+    };
+
+    updateMatchesInDB();
+  }, [matchedCompanies]);
 
   return {
     matchedCompanies,
     loading,
     error,
     user,
-    companies,
     refetch: () => {
       fetchUser();
       fetchCompanies();
