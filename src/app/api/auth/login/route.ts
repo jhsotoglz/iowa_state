@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDb();
-    const usersCollection = db.collection("users");
+    const usersCollection = db.collection("UserProfile");
 
     // Find user
     const user = await usersCollection.findOne({

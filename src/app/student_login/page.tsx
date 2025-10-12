@@ -17,7 +17,7 @@ export default function StudentLogin() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, role: "Student" }),
