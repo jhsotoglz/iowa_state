@@ -55,9 +55,7 @@ export default function CreateReviewPage() {
         }
         const data = await res.json();
         setUserMajor(data.user.major);
-
-      }
-      catch (error) {
+      } catch (error) {
         console.error(error);
       }
     };
@@ -286,8 +284,10 @@ export default function CreateReviewPage() {
 
             <div className="card-actions justify-end">
               <button
-                className={`btn btn-primary ${
-                  submitting ? "btn-disabled" : ""
+                className={`btn mt-2 px-6 text-base font-semibold shadow-md 
+                bg-[#13AA52] hover:bg-[#0f8a43] text-white border-none 
+                transition-all duration-300 ${
+                  submitting ? "btn-disabled opacity-70" : ""
                 }`}
                 disabled={submitting}
               >
