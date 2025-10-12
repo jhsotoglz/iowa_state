@@ -54,3 +54,53 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+
+export async function PATCH(req: NextRequest) {
+  try {
+    // Read the auth-token cookie
+    const token = req.cookies.get("auth-token")?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+    }
+
+    // Decode the token
+    const decoded = JSON.parse(Buffer.from(token, "base64").toString());
+    const userId = decoded.userId;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 400 });
+    }
+
+    // Get update fields from request body
+    const { workPreference, workAuthorization, graduationYear } = await req.json();
+
+    // Update user in MongoDB
+    const db = await getDb();
+    const result = await db.collection("UserProfile").updateOne(
+      { _id: new ObjectId(userId) },
+      { 
+        $set: {
+          workPreference,
+          workAuthorization,
+          graduationYear,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ 
+      success: true,
+      message: "User updated successfully"
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
