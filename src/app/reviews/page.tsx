@@ -51,7 +51,7 @@ export default function ReviewsPage() {
     return () => clearTimeout(id);
   }, [q]);
 
-  // Real-time stream (prepend only if it matches current q)
+  // Real-time stream
   useEffect(() => {
     const es = new EventSource("/backend/reviews/stream");
     es.onmessage = (evt) => {
@@ -117,7 +117,7 @@ export default function ReviewsPage() {
   );
 }
 
-/* ---------- Stars (read-only, gray) ---------- */
+/* ---------- Stars ---------- */
 function StarRating({ value }: { value: number }) {
   const v = Math.max(1, Math.min(5, Math.round(value)));
   return (
