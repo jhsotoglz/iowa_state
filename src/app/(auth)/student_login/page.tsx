@@ -181,10 +181,10 @@ export default function StudentLogin() {
             )}
 
             {/* Submit */}
-            <div className="form-control mt-2">
+            <div className="form-control mt-2 flex justify-center">
               <button
                 type="submit"
-                className={`btn btn-primary ${loading ? "loading" : ""}`}
+                className={`btn btn-primary  ${loading ? "loading" : ""}`}
                 disabled={loading}
               >
                 {loading
