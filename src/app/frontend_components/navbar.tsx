@@ -1,4 +1,3 @@
-// src/components/Navbar.tsx
 "use client";
 
 import Link from "next/link";
@@ -12,22 +11,23 @@ export default function Navbar({ className = "" }: NavbarProps) {
   const pathname = usePathname();
 
   const items = [
-    { href: "/view_reviews", label: "Reviews", icon: "💬" },
-    { href: "/", label: "Home", icon: "🏠", center: true }, // centered button
-    { href: "/companies_list", label: "Companies", icon: "🏢" },
-    { href: "/profile", label: "Profile", icon: "👤" },
+    { href: "/view_reviews", label: "Reviews" },
+    { href: "/", label: "Home", center: true },
+    { href: "/companies_list", label: "Companies" },
+    { href: "/profile", label: "Profile" },
   ];
 
   return (
     <nav
-      className={`fixed bottom-3 left-1/2 -translate-x-1/2 z-50
-        w-[92vw] sm:w-[520px] max-w-md ${className}`}
+      className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-50
+        w-[92vw] sm:w-[500px] max-w-md ${className}`}
     >
       <div
-        className="flex items-center justify-center gap-x-5 sm:gap-x-8 bg-base-100/90 backdrop-blur 
-                   border border-base-200 rounded-2xl shadow-lg px-6 py-3"
+        className="flex justify-between items-center gap-3 sm:gap-6 
+                   bg-base-100/90 backdrop-blur-md border border-base-200
+                   rounded-3xl shadow-xl px-6 py-3"
       >
-        {items.map(({ href, label, icon, center }) => {
+        {items.map(({ href, label, center }) => {
           const active = pathname === href;
           return (
             <Link
@@ -35,28 +35,17 @@ export default function Navbar({ className = "" }: NavbarProps) {
               href={href}
               aria-current={active ? "page" : undefined}
               className={[
-                "flex flex-col items-center justify-center gap-1 transition-all duration-150 rounded-xl px-3 py-1",
-                "hover:bg-base-200/70",
+                "transition-all duration-200 font-medium",
+                "text-sm sm:text-base tracking-wide select-none",
+                "px-4 py-2 rounded-xl",
+                "hover:text-primary hover:bg-base-200/60",
                 active
-                  ? "text-primary font-semibold bg-base-200/70"
-                  : "text-base-content/70 hover:text-primary",
-                center ? "scale-110 -translate-y-2 shadow-md" : "",
+                  ? "text-primary bg-base-200/70 font-semibold"
+                  : "text-base-content/70",
+                center ? "scale-110 -translate-y-1.5 shadow-md" : "",
               ].join(" ")}
             >
-              <span
-                className={`text-xl sm:text-2xl ${
-                  center ? "text-3xl sm:text-4xl" : ""
-                }`}
-              >
-                {icon}
-              </span>
-              <span
-                className={`text-[0.7rem] sm:text-xs ${
-                  center ? "font-semibold" : ""
-                }`}
-              >
-                {label}
-              </span>
+              {label}
             </Link>
           );
         })}
