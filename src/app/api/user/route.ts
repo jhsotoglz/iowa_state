@@ -77,6 +77,7 @@ export async function PATCH(req: NextRequest) {
           workPreference,
           workAuthorization,
           graduationYear,
+          matchedCompanies: [],
           updatedAt: new Date(),
         },
       }
@@ -101,3 +102,4 @@ export async function PATCH(req: NextRequest) {
     );
   }
 }
+
