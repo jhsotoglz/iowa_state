@@ -33,7 +33,7 @@ export default function StudentLogin() {
       if (!res.ok)
         throw new Error(data.error || "Login failed. Please try again.");
       // success
-      router.replace("/create_review");
+      router.replace("/view_reviews");
       // router.refresh();  // if you read session on the server and need to refresh
     } catch (err: any) {
       setError(err.message || "An error occurred. Please try again.");
