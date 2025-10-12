@@ -211,29 +211,13 @@ export default function CompaniesInfo() {
                 </h2>
 
                 <div className="flex flex-col gap-4">
-                    <div className="flex flex-wrap gap-2">
-                    {company.hiringFor.roles.map((role: string, index: number) => (
-                        <div key={index} className="badge badge-outline">
-                        {role}
-                        </div>
-                    ))}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                    {company.hiringFor.locations.map((location: string, index: number) => (
-                        <div key={index} className="badge badge-outline">
-                        {location}
-                        </div>
-                    ))}
-                    </div>
-
                     <div>
                     <span className="font-semibold">Visa Sponsor:</span>{" "}
-                    {company.hiringFor.sponsorsVisa ? "Yes" : "No"}
+                    {company.majors.sponsorsVisa ? "Yes" : "No"}
                     </div>
                 </div>
             </div>
-
+            
             <div>
                 <h2 className="text-2xl font-semibold text-secondary mb-2">
                 Do You Fit?
