@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { useRef, useState, useEffect } from "react";
 import type { MarkerPosition } from "../frontend_components/floor_map";
-import * as L from "leaflet";
 
 const FloorMap = dynamic(() => import("../frontend_components/floor_map"), {
   ssr: false,
@@ -34,21 +33,27 @@ const handleSave = async () => {
   const positions = floorMapRef.current?.getMarkers() || [];
 
   try {
-    // Loop through each marker and send an update request
+    // Send PATCH requests for all markers in parallel
     const updates = positions.map((marker) => {
-      return fetch(`/api/companyInfo/${marker.companyId}`, {
+
+      console.log("Updating marker:", marker.companyId);
+      return fetch("/api/companyInfo", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          boothNumber: {
-            lat: marker.lat,
-            lng: marker.lng,
+          id: marker.companyId,
+          updateData: {
+            boothNumber: {
+              lat: marker.lat,
+              lng: marker.lng,
+            },
           },
         }),
       });
     });
 
-    // Wait for all updates to complete
     await Promise.all(updates);
 
     alert("Booth numbers successfully updated!");
@@ -57,6 +62,7 @@ const handleSave = async () => {
     alert("Failed to update booth numbers.");
   }
 };
+
 
 
   return (
@@ -95,6 +101,7 @@ const handleSave = async () => {
             position: null, 
             _id: c._id,
           }))}
+          userType="admin"
         />
       </div>
 

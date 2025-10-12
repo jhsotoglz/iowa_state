@@ -17,6 +17,7 @@ interface FloorMapProps {
   width: number;
   height: number;
   companies: Company[];
+  userType: string;
 }
 
 export interface Company {
@@ -41,7 +42,7 @@ const markerIcon = new L.Icon({
 });
 
 const FloorMap = forwardRef<{ getMarkers: () => MarkerPosition[] }, FloorMapProps>(
-  ({ imageUrl, width, height, companies = [] }, ref) => {
+  ({ imageUrl, width, height, companies = [], userType }, ref) => {
     if (!width || !height) {
       return <p>Loading floor map...</p>;
     }
@@ -53,17 +54,17 @@ const FloorMap = forwardRef<{ getMarkers: () => MarkerPosition[] }, FloorMapProp
     const center: L.LatLngExpression = [height / 2, width / 2];
     const [markers, setMarkers] = useState<Company[]>([]);
 
-    // Generate random marker positions
+    // Generate marker locations 
     useEffect(() => {
       if (companies.length > 0) {
         const generatedMarkers = companies.map((company) => ({
           ...company,
           position: company.boothNumber
-            ? company.boothNumber // use existing position
+            ? company.boothNumber 
             : new L.LatLng(
                 Math.random() * height,
                 Math.random() * width
-              ), // random fallback
+              ), 
         }));
 
         setMarkers(generatedMarkers);
@@ -90,6 +91,7 @@ const FloorMap = forwardRef<{ getMarkers: () => MarkerPosition[] }, FloorMapProp
     };
 
     return (
+      
       <div style={{ height: "100%", width: "100%" }}>
         <MapContainer
           crs={L.CRS.Simple}
@@ -105,7 +107,7 @@ const FloorMap = forwardRef<{ getMarkers: () => MarkerPosition[] }, FloorMapProp
               key={i}
               position={m.boothNumber}
               icon={markerIcon}
-              draggable
+              draggable = {userType === "admin" ? true : false}
               autoPan
               eventHandlers={{
                 dragend: (e) => {
@@ -125,5 +127,5 @@ const FloorMap = forwardRef<{ getMarkers: () => MarkerPosition[] }, FloorMapProp
   }
 );
 
-FloorMap.displayName = "FloorMap";
+
 export default FloorMap;
