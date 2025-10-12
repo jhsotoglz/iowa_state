@@ -1,10 +1,10 @@
 // app/create_review/page.tsx
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import StarRating from "../frontend_components/star_rating";
 
 const ACTION_URL = "/backend/reviews";
-const HARDCODED_EMAIL = "alice@example.com"; // ← change this
+
 // ISU College of Engineering majors (labels show the common ISU abbrev)
 const MAJORS = [
   { value: "AER E", label: "Aerospace Engineering (AER E)" },
@@ -23,8 +23,10 @@ const MAJORS = [
   { value: "SE", label: "Software Engineering (SE)" },
 ];
 
+type CompanyLite = { _id: string; companyName: string };
+
 export default function CreateReviewPage() {
-  //states
+  // form state
   const [companyName, setCompanyName] = useState("");
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState<number | "">("");
@@ -33,6 +35,92 @@ export default function CreateReviewPage() {
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(
     null
   );
+
+  // --- Autocomplete state ---
+  const [allCompanies, setAllCompanies] = useState<CompanyLite[]>([]);
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const blurTimeout = useRef<number | null>(null);
+
+  // fetch companies once
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/companyInfo", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const list: CompanyLite[] = (data?.companies ?? [])
+          .map((c: { _id?: string; companyName?: string }) => ({
+            _id: String(c._id ?? ""),
+            companyName: String(c.companyName ?? ""),
+          }))
+          .filter((c: CompanyLite) => c.companyName.trim().length > 0);
+
+        setAllCompanies(list);
+      } catch {}
+    })();
+  }, []);
+
+  // filter suggestions (case-insensitive, substring)
+  const suggestions = useMemo(() => {
+    const q = companyName.trim().toLowerCase();
+    if (!q) return [];
+    const matches = allCompanies.filter((c) =>
+      c.companyName.toLowerCase().includes(q)
+    );
+    // de-dupe by name and limit to 8
+    const seen = new Set<string>();
+    const unique = [];
+    for (const m of matches) {
+      if (seen.has(m.companyName.toLowerCase())) continue;
+      seen.add(m.companyName.toLowerCase());
+      unique.push(m);
+      if (unique.length >= 8) break;
+    }
+    return unique;
+  }, [companyName, allCompanies]);
+
+  // handle keyboard in the input
+  function onCompanyKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!open || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlight((h) => (h + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlight((h) => (h - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const pick = suggestions[highlight];
+      if (pick) {
+        setCompanyName(pick.companyName);
+        setOpen(false);
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  }
+
+  function pickCompany(name: string) {
+    setCompanyName(name);
+    setOpen(false);
+  }
+
+  function onInputFocus() {
+    if (blurTimeout.current) {
+      window.clearTimeout(blurTimeout.current);
+      blurTimeout.current = null;
+    }
+    if (suggestions.length > 0) setOpen(true);
+  }
+
+  function onInputBlur() {
+    // small delay so a click in the menu can register
+    blurTimeout.current = window.setTimeout(
+      () => setOpen(false),
+      120
+    ) as unknown as number;
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -55,27 +143,23 @@ export default function CreateReviewPage() {
       const res = await fetch(ACTION_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // 👇 no email here
         body: JSON.stringify({
           companyName: companyName.trim(),
           comment: comment.trim(),
           rating: Number(rating),
           ...(major ? { major } : {}),
         }),
-        // Only needed if your API is on a different origin:
-        // credentials: "include",
       });
 
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 401) {
-          setMsg({ type: "err", text: "Please log in to submit a review." });
-        } else {
-          setMsg({
-            type: "err",
-            text: data?.error || "Failed to create review",
-          });
-        }
+        setMsg({
+          type: "err",
+          text:
+            res.status === 401
+              ? "Please log in to submit a review."
+              : data?.error || "Failed to create review",
+        });
         return;
       }
 
@@ -84,8 +168,9 @@ export default function CreateReviewPage() {
       setComment("");
       setRating("");
       setMajor("");
+      setOpen(false);
     } catch (err: any) {
-      setMsg({ type: "err", text: err.message || "Something went wrong" });
+      setMsg({ type: "err", text: err?.message || "Something went wrong" });
     } finally {
       setSubmitting(false);
     }
@@ -106,19 +191,63 @@ export default function CreateReviewPage() {
               <span>{msg.text}</span>
             </div>
           )}
-          {/* Company Name */}
+
+          {/* FORM */}
           <form className="space-y-4" onSubmit={onSubmit}>
+            {/* Company Name with autocomplete */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Company Name *</span>
               </label>
-              <input
-                className="input input-bordered"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                required
-              />
+
+              <div className="relative">
+                <input
+                  className="input input-bordered w-full"
+                  value={companyName}
+                  onChange={(e) => {
+                    setCompanyName(e.target.value);
+                    setHighlight(0);
+                    if (e.target.value.trim()) setOpen(true);
+                    else setOpen(false);
+                  }}
+                  onKeyDown={onCompanyKeyDown}
+                  onFocus={onInputFocus}
+                  onBlur={onInputBlur}
+                  placeholder="Start typing…"
+                  autoComplete="off"
+                />
+
+                {/* Dropdown */}
+                {open && suggestions.length > 0 && (
+                  <ul className="menu bg-base-100 w-full rounded-box shadow-lg border border-base-200 absolute z-20 mt-2">
+                    {suggestions.map((s, i) => (
+                      <li key={s._id}>
+                        <button
+                          type="button"
+                          className={i === highlight ? "active" : ""}
+                          onMouseEnter={() => setHighlight(i)}
+                          onMouseDown={(e) => e.preventDefault()} // keep focus
+                          onClick={() => pickCompany(s.companyName)}
+                        >
+                          {s.companyName}
+                        </button>
+                      </li>
+                    ))}
+                    {/* Optional: allow keeping custom name */}
+                    {!suggestions.some(
+                      (s) =>
+                        s.companyName.toLowerCase() ===
+                        companyName.trim().toLowerCase()
+                    ) && (
+                      <li className="menu-title px-4 py-2 text-xs opacity-60">
+                        Press Enter to keep “{companyName.trim()}”
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </div>
             </div>
+
             {/* Comment */}
             <div className="form-control">
               <label className="label">
@@ -133,6 +262,7 @@ export default function CreateReviewPage() {
                 required
               />
             </div>
+
             {/* Major */}
             <div className="form-control">
               <label className="label">
@@ -151,7 +281,7 @@ export default function CreateReviewPage() {
                 ))}
               </select>
             </div>
-            {/* Rating */}
+
             {/* Rating */}
             <div className="form-control">
               <label className="label">
@@ -162,8 +292,6 @@ export default function CreateReviewPage() {
               </label>
 
               <StarRating value={rating} onChange={(n) => setRating(n)} />
-
-              {/* Hidden input to keep HTML form semantics if needed */}
               <input
                 type="hidden"
                 name="rating"
