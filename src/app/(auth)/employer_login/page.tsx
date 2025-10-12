@@ -197,7 +197,7 @@ export default function EmployerLogin() {
           </button>
 
           <button
-            onClick={() => router.push("/login_page")}
+            onClick={() => router.push("/login_signup")}
             className="btn btn-ghost btn-sm"
           >
             Back to role selection
