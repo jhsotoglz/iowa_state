@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { getDb } from "@/database/mongodb";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +13,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await authenticateUser(email, password, role);
+    const db = await getDb();
+    const usersCollection = db.collection("users");
+
+    // Find user
+    const user = await usersCollection.findOne({
+      email,
+      password,
+      ...(role && { role }),
+    });
 
     if (!user) {
       return NextResponse.json(
@@ -24,13 +30,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create simple session token (just user ID for hackathon)
-    const token = generateToken(user);
+    const token = generateToken({
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+      name: user.name,
+    });
 
     const response = NextResponse.json({
       success: true,
       user: {
-        id: user.id,
+        id: user._id.toString(),
         email: user.email,
         role: user.role,
         name: user.name,
@@ -41,7 +51,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return response;
@@ -54,30 +64,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function authenticateUser(
-  email: string,
-  password: string,
-  role?: string
-) {
-  try {
-    // Find user by email and password (plain text for hackathon simplicity)
-    const user = await prisma.user.findFirst({
-      where: {
-        email,
-        password, // Direct password match - NOT for production!
-        ...(role && { role }),
-      },
-    });
-
-    return user;
-  } catch (error) {
-    console.error("Error authenticating user:", error);
-    return null;
-  }
-}
-
 function generateToken(user: any) {
-  // Simple token for hackathon - just encode user ID
   return Buffer.from(
     JSON.stringify({
       userId: user.id,

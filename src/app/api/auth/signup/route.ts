@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { getDb } from "@/database/mongodb";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,10 +13,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const db = await getDb();
+    const usersCollection = db.collection("users");
+
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUser = await usersCollection.findOne({ email });
 
     if (existingUser) {
       return NextResponse.json(
@@ -28,22 +27,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password,
-        name,
-        role: role || "Student",
-      },
-    });
+    const user = {
+      email,
+      password,
+      name,
+      role: role || "Student",
+      createdAt: new Date(),
+    };
+
+    const result = await usersCollection.insertOne(user);
 
     // Generate token
-    const token = generateToken(user);
+    const token = generateToken({
+      id: result.insertedId.toString(),
+      email: user.email,
+      role: user.role,
+      name: user.name,
+    });
 
     const response = NextResponse.json({
       success: true,
       user: {
-        id: user.id,
+        id: result.insertedId.toString(),
         email: user.email,
         role: user.role,
         name: user.name,
