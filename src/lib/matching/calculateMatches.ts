@@ -39,7 +39,6 @@ export function calculateMatches(user: User, companies: Company[]): Company[] {
     }
 
     // RULE 3: Employment type must match (absolute requirement)
-    // FIX: Normalize to uppercase for case-insensitive comparison
     const normalizedUserPrefs = user.workPreferences.map((p) =>
       p.toUpperCase().replace(/[-\s]/g, "")
     );
