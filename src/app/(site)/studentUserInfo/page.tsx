@@ -138,7 +138,7 @@ export default function UserInfo() {
       }
 
       alert("Profile updated successfully!");
-      router.push("/view_reviews");
+      router.push("/home");
     } catch (err) {
       setError("Failed to update profile");
       console.error(err);
