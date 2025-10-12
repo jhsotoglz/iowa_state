@@ -45,15 +45,9 @@ export default function CompaniesInfo() {
             const companyRating = data.companies.find(
                 (c: any) => c.companyName.toLowerCase() === company.companyName.toLowerCase()
             );
-            
-
-            // Find majors mentioned in reviews for this company if available
-            const companyMajors = data.majors.filter((m: any) =>
-                m.companyName?.toLowerCase() === company.companyName.toLowerCase()
-            );
 
             setAverageRating(companyRating?.avgRating || 0);
-            
+
             // Use majors only if the current company has ratings
             if (companyRating) {
                 setTopMajors(data.majors || []);

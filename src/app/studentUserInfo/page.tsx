@@ -8,6 +8,7 @@ interface UserInfo {
   workPreference?: string[];
   workAuthorization?: string[];
   graduationYear?: string;
+  major?: string;
 }
 
 export default function UserInfo() {
@@ -21,6 +22,25 @@ export default function UserInfo() {
   const [workPreference, setWorkPreference] = useState<string[]>([]);
   const [workAuthorization, setWorkAuthorization] = useState<string[]>([]);
   const [graduationYear, setGraduationYear] = useState("");
+  const [major, setMajor] = useState("");
+
+  // ISU College of Engineering majors (labels show the common ISU abbrev)
+  const majors = [
+    { value: "AER E", label: "Aerospace Engineering (AER E)" },
+    { value: "AG E", label: "Agricultural Engineering (AG E)" },
+    { value: "BSE", label: "Biological Systems Engineering (BSE)" },
+    { value: "CH E", label: "Chemical Engineering (CH E)" },
+    { value: "C E", label: "Civil Engineering (C E)" },
+    { value: "CON E", label: "Construction Engineering (CON E)" },
+    { value: "CPR E", label: "Computer Engineering (CPR E)" },
+    { value: "CYB E", label: "Cybersecurity Engineering (CYB E)" },
+    { value: "E E", label: "Electrical Engineering (E E)" },
+    { value: "ENVE", label: "Environmental Engineering (ENVE)" },
+    { value: "I E", label: "Industrial Engineering (I E)" },
+    { value: "M S E", label: "Materials Engineering (M S E)" },
+    { value: "M E", label: "Mechanical Engineering (M E)" },
+    { value: "SE", label: "Software Engineering (SE)" },
+  ];
 
   // Generate years for dropdown (current year to 10 years ahead)
   const currentYear = new Date().getFullYear();
@@ -48,6 +68,7 @@ export default function UserInfo() {
       setWorkPreference(data.user.workPreference || []);
       setWorkAuthorization(data.user.workAuthorization || []);
       setGraduationYear(data.user.graduationYear || "");
+      setMajor(data.user.major || "");
     } catch (err) {
       setError("Failed to load user data");
       console.error(err);
@@ -92,6 +113,11 @@ export default function UserInfo() {
       setSaving(false);
       return;
     }
+    if (!major) {
+      setError("Please select your major");
+      setSaving(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/user", {
@@ -100,6 +126,7 @@ export default function UserInfo() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          major,
           workPreference,
           workAuthorization,
           graduationYear,
@@ -195,6 +222,27 @@ export default function UserInfo() {
                       )
                     )}
                   </div>
+                </div>
+
+                {/* Major */}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text text-lg font-semibold">
+                      Major
+                    </span>
+                  </label>
+                  <select
+                    className="select select-bordered w-full"
+                    value={major} 
+                    onChange={(e) => setMajor(e.target.value)}
+                  >
+                    <option value="">Select a major</option>
+                    {majors.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Graduation Year */}
