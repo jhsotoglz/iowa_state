@@ -126,7 +126,7 @@ export function useMatching(options: UseMatchingOptions = {}) {
 
     if (matchedCompanies.length === 0) return;
 
-    const companyNames = matchedCompanies.map((c) => c.name);
+    const companyNames = matchedCompanies.map((c) => c.id);
 
     // Only update if there are actual changes
     if (!hasMatchesChanged(companyNames)) {

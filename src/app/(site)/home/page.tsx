@@ -3,18 +3,55 @@
 import dynamic from "next/dynamic";
 import { useRef, useState, useEffect } from "react";
 import type { MarkerPosition } from "../frontend_components/floor_map";
-
+import { useMatching } from "@/lib/matching/useMatching";
 
 const FloorMap = dynamic(() => import("../frontend_components/floor_map"), {
   ssr: false,
 });
 
-
-export default function home() {
+export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const floorMapRef = useRef<{ getMarkers: () => MarkerPosition[] }>(null);
   const [companies, setCompanies] = useState<any[]>([]);
+
+  // Fetch the profile data
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const res = await fetch("/api/user");
+        if (!res.ok) {
+          return;
+        }
+        const data = await res.json();
+        setUser(data.user);
+        console.log("Fetch User", data.user);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkUser();
+  }, []);
+
+  // Only run matching for students (not admins or recruiters)
+  const shouldRunMatching = user && user.role === "Student" && !user.admin;
+
+  // Call useMatching hook - it will run automatically for students
+  const { matchedCompanies, loading: matchingLoading, error: matchingError } = useMatching({
+    enableAutoRefresh: shouldRunMatching,
+    refreshInterval: 60000,
+    debounceDelay: 2000,
+  });
+
+  // Log matches when they update
+  useEffect(() => {
+    if (shouldRunMatching && matchedCompanies.length > 0) {
+      console.log("Student matches updated:", matchedCompanies);
+    }
+  }, [matchedCompanies, shouldRunMatching]);
 
   useEffect(() => {
     fetch("/api/companyInfo")
@@ -33,7 +70,7 @@ export default function home() {
       .catch((err) => console.error("Error fetching company info:", err));
   }, []);
 
-    const handleSave = async () => {
+  const handleSave = async () => {
     const positions = floorMapRef.current?.getMarkers() || [];
 
     try {
@@ -66,68 +103,39 @@ export default function home() {
     }
   };
 
-// Fetch the profile data
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const res = await fetch("/api/user");
-        if (!res.ok) {
-          return;
-        }
-        const data = await res.json();
-        setUser(data.user);
-        console.log("Fetch User", data.user)
-
-      }
-      catch (error) {
-        // Redirect to the login if there is an error.
-        console.error(error);
-      }
-      finally {
-        setLoading(false)
-      }
-    };
-
-    checkUser();
-  }, []);
-
-
-
   return (
-<main className="relative min-h-screen bg-base-200 flex items-center justify-center p-6">
-  <div className="w-4/5 h-[80vh] card bg-base-100 shadow-xl overflow-hidden">
-    <div className="card-body p-0">
-      <FloorMap
-        ref={floorMapRef}
-        imageUrl="/isu_floor.png"
-        width={3000}
-        height={1800}
-        companies={companies.map((c) => ({
-          companyName: c.companyName,
-          boothNumber: c.boothNumber,
-          majors: c.majors,
-          recruiterInfo: c.recruiterInfo?.name,
-          employmentType: c.employmentType,
-          industry: c.industry,
-          website: c.website,
-          _id: c._id,
-          count: c.count
-        }))}
-        admin={user?.admin === true}
-      />
-    </div>
-  </div>
+    <main className="relative min-h-screen bg-base-200 flex items-center justify-center p-6">
+      <div className="w-4/5 h-[80vh] card bg-base-100 shadow-xl overflow-hidden">
+        <div className="card-body p-0">
+          <FloorMap
+            ref={floorMapRef}
+            imageUrl="/isu_floor.png"
+            width={3000}
+            height={1800}
+            companies={companies.map((c) => ({
+              companyName: c.companyName,
+              boothNumber: c.boothNumber,
+              majors: c.majors,
+              recruiterInfo: c.recruiterInfo?.name,
+              employmentType: c.employmentType,
+              industry: c.industry,
+              website: c.website,
+              _id: c._id,
+              count: c.count,
+            }))}
+            admin={user?.admin === true}
+          />
+        </div>
+      </div>
 
-{user?.admin && (
-  <button
-    className="btn btn-primary absolute bottom-12 right-51 shadow-lg"
-    onClick={handleSave}
-  >
-    Save Map
-  </button>
-)}
-
-</main>
-
+      {user?.admin && (
+        <button
+          className="btn btn-primary absolute bottom-12 right-51 shadow-lg"
+          onClick={handleSave}
+        >
+          Save Map
+        </button>
+      )}
+    </main>
   );
 }
